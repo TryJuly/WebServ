@@ -10,7 +10,7 @@ INCLUDES = includes
 OBJ_DIR = objets
 
 VPATH = srcs
-SRCS = main.cpp
+SRCS = main.cpp Server.cpp
 
 OBJS = ${patsubst %.cpp, ${OBJ_DIR}/%.o, ${SRCS}}
 #################################################################################################################
