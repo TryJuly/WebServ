@@ -6,12 +6,12 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 17:15:09 by strieste          #+#    #+#             */
-/*   Updated: 2026/05/14 17:07:32 by strieste         ###   ########.fr       */
+/*   Updated: 2026/05/18 07:44:26 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <stdexcept>
-#include <Server.hpp>
+#include "../header/Server.hpp"
 #include <iostream>
 
 int	main(int ac, char **av)

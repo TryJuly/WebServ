@@ -6,7 +6,7 @@ NAME = webserv
 CC = c++
 FLAGS = -Wall -Wextra -Werror -std=c++98
 
-INCLUDES = includes
+INCLUDES = header
 OBJ_DIR = objets
 
 VPATH = srcs
