@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 14:34:40 by strieste          #+#    #+#             */
-/*   Updated: 2026/05/20 09:16:42 by strieste         ###   ########.fr       */
+/*   Updated: 2026/05/21 14:51:51 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 # include <string>
 # include <sys/socket.h>
 # include <netinet/in.h>
+# include <sys/stat.h>
 // # include <sys/event.h>	// MacOS
 # include <sys/epoll.h>	// Linux
 # include <iostream>

@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 14:38:06 by strieste          #+#    #+#             */
-/*   Updated: 2026/05/20 15:46:58 by strieste         ###   ########.fr       */
+/*   Updated: 2026/05/21 14:53:12 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,6 +73,9 @@ void Server::StartServer()
 					std::cout << "###	Client Message:	###\n" << std::endl;
 					std::cout << buff << std::endl;
 					std::cout << "###	End client message	###\n" << std::endl;
+					struct stat sendClient;
+					stat("../index.html", &sendClient);
+					std::cout << sendClient.st_size << std::endl;
 					write(changeList[i].data.fd, "HTTP/1.1 200 OK\r\nContent-Length:13\r\n\r\nHello, world!", 52);
 				}
 			}
