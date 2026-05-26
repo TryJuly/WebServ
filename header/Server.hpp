@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 14:34:40 by strieste          #+#    #+#             */
-/*   Updated: 2026/05/21 14:51:51 by strieste         ###   ########.fr       */
+/*   Updated: 2026/05/26 13:12:22 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,9 @@
 # include <iostream>
 # include <unistd.h>
 # include <errno.h>
+# include <vector>
+# include "ConfigServer.hpp"
+# include "Client.hpp"
 
 # define MAX_EVENTS 10
 
@@ -29,19 +32,22 @@ class Server
 {
 	public:
 		Server();
+		// Server(char **av);
 		Server(Server const &copy);
 		~Server();
 		Server&	operator=(Server const &copy);
-		
+
 		void	StartServer();
 		void	StopServer();
 
 	private:
-		int	_socket;
-		int	_port;
-		// int _kq;
 		int _fdServer;
-		// std::string	_ipAddress;
+		int	_numberConfig;
+		std::vector<ConfigServer>	_configServer;
+		std::vector<Client>	_client;
+
+		// int	_socket;
+		// int	_port;
 		struct sockaddr_in	_sockAddress;
 
 		// struct epoll_event	_event;
