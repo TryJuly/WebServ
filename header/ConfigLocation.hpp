@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/25 13:20:16 by strieste          #+#    #+#             */
-/*   Updated: 2026/05/25 17:50:03 by strieste         ###   ########.fr       */
+/*   Updated: 2026/05/26 09:50:14 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,14 +38,14 @@ class ConfigLocation
 		void	Setindex(std::string const &str);
 		void	SetRedir(std::string const &str);
 		void	SetUpload(std::string const &str);
-		void	GetMethodes(std::string const &str);
-		void	GetCGI(std::string const &key, std::string const &value);
+		void	SetMethodes(std::string const &str);
+		void	SetCGI(std::string const &key, std::string const &value);
 
 	private:
 		std::string	_path;
 		std::string	_root;
 		std::string	_index;
-		// bool		_autoindex;
+		bool		_autoindex;
 		std::string	_redir;	// 301
 		std::string	_uploadPath;	// PATH UPLOAD
 		std::vector<std::string>	_methode;	// GET POST DELETE

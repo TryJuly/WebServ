@@ -3,14 +3,14 @@
 #################################################################################################################
 NAME = webserv
 
-CC = c++
-FLAGS = -Wall -Wextra -Werror -std=c++98
+CC = g++
+FLAGS = -Wall -Wextra -Werror -std=c++98 -g
 
 INCLUDES = header
 OBJ_DIR = objets
 
 VPATH = srcs
-SRCS = main.cpp Server.cpp
+SRCS = main.cpp Server.cpp ConfigServer.cpp ConfigLocation.cpp
 
 OBJS = ${patsubst %.cpp, ${OBJ_DIR}/%.o, ${SRCS}}
 #################################################################################################################

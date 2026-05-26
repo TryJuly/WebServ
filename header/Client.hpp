@@ -1,32 +1,31 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.cpp                                           :+:      :+:    :+:   */
+/*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/05/12 17:15:09 by strieste          #+#    #+#             */
-/*   Updated: 2026/05/26 08:31:04 by strieste         ###   ########.fr       */
+/*   Created: 2026/05/26 13:10:16 by strieste          #+#    #+#             */
+/*   Updated: 2026/05/26 13:15:43 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <stdexcept>
-#include <iostream>
-#include "../header/Server.hpp"
+#ifndef CLIENT_HPP
+# define CLIENT_HPP
 
-int	main(int ac, char **av)
+class Client
 {
-	(void)ac;
-	(void)av;
-	try {
-		if (ac > 2)
-			throw (std::invalid_argument("Error: Invalide arguments."));
-		Server	server;
-		server.StartServer();
-	}
-	catch(const std::exception& e) {
-		std::cerr << e.what() << std::endl;
-		return (1);
-	}
-	return (0);
-}
+	public:
+		Client();
+		Client(Client const &copy);
+		~Client();
+		Client&	operator=(Client const &copy);
+
+		int	GetFd();
+		void	SetFd(int fd);
+
+	private:
+		int	_fd;
+};
+
+#endif
