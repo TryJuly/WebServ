@@ -6,7 +6,7 @@
 /*   By: cbezenco <cbezenco@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 14:38:06 by strieste          #+#    #+#             */
-/*   Updated: 2026/05/26 13:21:31 by cbezenco         ###   ########.fr       */
+/*   Updated: 2026/05/26 13:33:21 by cbezenco         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -98,8 +98,8 @@ void Server::StartServer()
 						close(changeList[i].data.fd);
 						NbClient--;
 					}
-          else {
-          std::cout << "###	Client Message:	###\n" << std::endl;
+					else {
+					std::cout << "###	Client Message:	###\n" << std::endl;
 					std::cout << buff << std::endl;
 					std::cout << "###	End client message	###\n" << std::endl;
 					struct stat sendClient;
@@ -119,13 +119,14 @@ void Server::StartServer()
 					}
 					write(changeList[i].data.fd, response.c_str(), response.size());
 					//write(changeList[i].data.fd, "HTTP/1.1 200 OK\r\nContent-Length:13\r\n\r\nHello, world!", 52);
+					std::cout << "HAHAHA";
 				}
 			}
 			NbRequest++;
 			std::cout << "Nb Request is: " << NbRequest << std::endl;
 			std::cout << "Nb Client is: " << NbClient << std::endl;
 		}
-		
+		}	
 	}
 }
 
