@@ -1,32 +1,44 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.cpp                                           :+:      :+:    :+:   */
+/*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/05/12 17:15:09 by strieste          #+#    #+#             */
-/*   Updated: 2026/05/26 08:31:04 by strieste         ###   ########.fr       */
+/*   Created: 2026/05/26 13:12:35 by strieste          #+#    #+#             */
+/*   Updated: 2026/05/26 13:14:57 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <stdexcept>
-#include <iostream>
-#include "../header/Server.hpp"
+#include "../header/Client.hpp"
 
-int	main(int ac, char **av)
+Client::Client()
 {
-	(void)ac;
-	(void)av;
-	try {
-		if (ac > 2)
-			throw (std::invalid_argument("Error: Invalide arguments."));
-		Server	server;
-		server.StartServer();
-	}
-	catch(const std::exception& e) {
-		std::cerr << e.what() << std::endl;
-		return (1);
-	}
-	return (0);
+	_fd = -1;
+	return ;
+}
+
+Client::Client(Client const &copy)
+{
+	(*this) = copy;
+	return ;
+}
+
+Client::~Client()
+{}
+
+Client&	Client::operator=(Client const &copy)
+{
+	if (this != &copy)
+		_fd = copy._fd;
+	return (*this);
+}
+
+int	Client::GetFd()
+{ return (_fd); }
+
+void	Client::SetFd(int fd)
+{
+	_fd = fd;
+	return ;
 }

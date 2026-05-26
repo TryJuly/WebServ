@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/25 12:51:30 by strieste          #+#    #+#             */
-/*   Updated: 2026/05/25 17:50:17 by strieste         ###   ########.fr       */
+/*   Updated: 2026/05/26 10:59:38 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,9 @@
 # include <string>
 # include <map>
 # include <vector>
+# include <sys/socket.h>
+# include <exception>
+# include <iostream>
 # include "ConfigLocation.hpp"
 
 class ConfigServer
