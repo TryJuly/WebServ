@@ -3,15 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
+/*   By: cbezenco <cbezenco@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 14:38:06 by strieste          #+#    #+#             */
-/*   Updated: 2026/05/26 11:47:56 by strieste         ###   ########.fr       */
+/*   Updated: 2026/05/26 13:21:31 by cbezenco         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../header/Server.hpp"
 #include <iostream>
+#include <fstream>
 
 /*	Linux version	*/
 /*	Default constructor no Config File	*/
@@ -97,15 +98,27 @@ void Server::StartServer()
 						close(changeList[i].data.fd);
 						NbClient--;
 					}
-					else {
-						std::cout << "###	Client Message:	###\n" << std::endl;
-						std::cout << buff << std::endl;
-						std::cout << "###	End client message	###\n" << std::endl;
-						struct stat sendClient;
-						stat("../index.html", &sendClient);
-						std::cout << sendClient.st_size << std::endl;
-						write(changeList[i].data.fd, "HTTP/1.1 200 OK\r\nContent-Length:13\r\n\r\nHello, world!", 52);
+          else {
+          std::cout << "###	Client Message:	###\n" << std::endl;
+					std::cout << buff << std::endl;
+					std::cout << "###	End client message	###\n" << std::endl;
+					struct stat sendClient;
+					stat("index.html", &sendClient);
+					std::cout << sendClient.st_size << std::endl;
+					std::string response = "HTTP/1.1 200 OK\r\nContent-Type:text/html\r\nContent-Length:405";
+					response.append("\r\n\r\n");
+					std::ifstream ifs;
+					ifs.open("index.html");
+					if (ifs.is_open()) {
+						std::cout << "All good" << std::endl;
 					}
+					std::string line;
+					while (std::getline(ifs, line)) {
+						response.append(line);
+						response.append("\n");					
+					}
+					write(changeList[i].data.fd, response.c_str(), response.size());
+					//write(changeList[i].data.fd, "HTTP/1.1 200 OK\r\nContent-Length:13\r\n\r\nHello, world!", 52);
 				}
 			}
 			NbRequest++;
