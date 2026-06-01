@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
+/*   By: cbezenco <cbezenco@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 14:38:06 by strieste          #+#    #+#             */
-/*   Updated: 2026/05/28 14:45:12 by cbezenco         ###   ########.fr       */
+/*   Updated: 2026/06/01 09:56:16 by cbezenco         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -154,37 +154,37 @@ void Server::StartServer()
 	int NbClient = 0;
 	int	IdClient = 0;
 	while (true) {
-		std::cout << "\n###	Wait Request Client	###\n" << std::endl;
-		int nfds = epoll_wait(_fdServer, changeList, MAX_EVENTS, -1);	// -1 wait unlimited
-		for (int i = 0; i < nfds; i++) {
-			for (int j = 0; j < _numberConfig; j++) {
-				if (changeList[i].data.fd == _configServer[j].GetSocket()) {
-					std::cout << "###	INFOS	###\n" << std::endl;
-					std::cout << "Recu " << changeList[i].data.fd << " socket: " << _configServer[0].GetSocket() << " event: " << changeList[i].events << " data ptr: " << changeList[i].data.ptr << std::endl;
-					std::cout << "\n###	FIN INFOS	###\n" << std::endl;
-					socklen_t addrLen = sizeof(_sockAddress);
-					int socketClient = accept(_configServer[0].GetSocket(), reinterpret_cast<struct sockaddr *>(&_sockAddress), &addrLen);
-					NbClient++;
-					struct epoll_event clientEvent;
-					clientEvent.events = EPOLLIN | EPOLLET;
-					clientEvent.data.fd = socketClient;
-					epoll_ctl(_fdServer, EPOLL_CTL_ADD, socketClient, &clientEvent);
-				}
-				else {
-					char buff[1024];
-					if (read(changeList[i].data.fd, buff, sizeof(buff)) == 0) {
-						close(changeList[i].data.fd);
-						NbClient--;
-					}
-					else {
-					std::cout << "###	Client Message:	###\n" << std::endl;
-					Request req(buff);
-					std::cout << "###	End client message	###\n" << std::endl;
+		// std::cout << "\n###	Wait Request Client	###\n" << std::endl;
+		// int nfds = epoll_wait(_fdServer, changeList, MAX_EVENTS, -1);	// -1 wait unlimited
+		// for (int i = 0; i < nfds; i++) {
+		// 	for (int j = 0; j < _numberConfig; j++) {
+		// 		if (changeList[i].data.fd == _configServer[j].GetSocket()) {
+		// 			std::cout << "###	INFOS	###\n" << std::endl;
+		// 			std::cout << "Recu " << changeList[i].data.fd << " socket: " << _configServer[0].GetSocket() << " event: " << changeList[i].events << " data ptr: " << changeList[i].data.ptr << std::endl;
+		// 			std::cout << "\n###	FIN INFOS	###\n" << std::endl;
+		// 			socklen_t addrLen = sizeof(_sockAddress);
+		// 			int socketClient = accept(_configServer[0].GetSocket(), reinterpret_cast<struct sockaddr *>(&_sockAddress), &addrLen);
+		// 			NbClient++;
+		// 			struct epoll_event clientEvent;
+		// 			clientEvent.events = EPOLLIN | EPOLLET;
+		// 			clientEvent.data.fd = socketClient;
+		// 			epoll_ctl(_fdServer, EPOLL_CTL_ADD, socketClient, &clientEvent);
+		// 		}
+		// 		else {
+		// 			char buff[1024];
+		// 			if (read(changeList[i].data.fd, buff, sizeof(buff)) == 0) {
+		// 				close(changeList[i].data.fd);
+		// 				NbClient--;
+		// 			}
+		// 			else {
+		// 			std::cout << "###	Client Message:	###\n" << std::endl;
+		// 			Request req(buff);
+		// 			std::cout << "###	End client message	###\n" << std::endl;
 
-					Response rep(req);
-					std::string response = rep.printResponse();
-					write(changeList[i].data.fd, response.c_str(), response.size());
-					std::cout << "###  Server Message: ###\n\n" << response << "\n###  End server message ###\n" << std::endl;
+		// 			Response rep(req);
+		// 			std::string response = rep.printResponse();
+		// 			write(changeList[i].data.fd, response.c_str(), response.size());
+		// 			std::cout << "###  Server Message: ###\n\n" << response << "\n###  End server message ###\n" << std::endl;
 		int nfds = _fds.size();
 		int nb = poll(&_fds[0], nfds , -1);
 		if (nb == -1)
@@ -218,36 +218,23 @@ void Server::StartServer()
 						}
 						else {
 						std::cout << "###	Client Message:	###\n" << std::endl;
-						std::cout << buff << std::endl;
+						Request req(buff);
 						std::cout << "###	End client message	###\n" << std::endl;
-						struct stat sendClient;
-						stat("index.html", &sendClient);
-						std::cout << sendClient.st_size << std::endl;
-						std::string response = "HTTP/1.1 200 OK\r\nContent-Type:text/html\r\nContent-Length:405";
-						response.append("\r\n\r\n");
-						std::ifstream ifs;
-						ifs.open("index.html");
-						if (ifs.is_open()) {
-							std::cout << "All good" << std::endl;
-						}
-						std::string line;
-						while (std::getline(ifs, line)) {
-							response.append(line);
-							response.append("\n");					
-						}
+
+						Response rep(req);
+						std::string response = rep.printResponse();
 						write(_fds[i].fd, response.c_str(), response.size());
-						//write(changeList[i].data.fd, "HTTP/1.1 200 OK\r\nContent-Length:13\r\n\r\nHello, world!", 52);
-						std::cout << "HAHAHA";
+						std::cout << "###  Server Message: ###\n\n" << response << "\n###  End server message ###\n" << std::endl;
+						}
 					}
-				}
 			}
 			NbRequest++;
 			std::cout << "Nb Request is: " << NbRequest << std::endl;
 			std::cout << "Nb Client is: " << NbClient << std::endl;
 		}
-		}
-	}	
-}
+	}
+}	
+
 
 static int	FindIndexServerFD(Server &server, int fd)
 {

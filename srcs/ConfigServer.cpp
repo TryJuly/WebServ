@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigServer.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
+/*   By: cbezenco <cbezenco@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 08:36:43 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/01 09:35:15 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/01 10:01:47 by cbezenco         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -244,13 +244,13 @@ static void	FillConfigLocation(ConfigLocation &config, std::vector<std::string> 
 	(void) locationChunk;
 	config.SetPath(path);
 	// char	iD = GetIdentifierLocation(locationChunk);
-	std::cout << "\nDEBUG START\n" << std::endl;
-	for (unsigned int i = 1; i < locationChunk.size(); i++) {
-		size_t	end = locationChunk[i].find_first_of(" \t");
-		std::string token = locationChunk[i].substr(0, end);
-		std::cout << "DEBUG TOKEN: " << token << " END" << std::endl;
-	}
-	std::cout << "\nDEBUG END\n" << std::endl;
+	// std::cout << "\nDEBUG START\n" << std::endl;
+	// for (unsigned int i = 1; i < locationChunk.size(); i++) {
+	// 	size_t	end = locationChunk[i].find_first_of(" \t");
+	// 	std::string token = locationChunk[i].substr(0, end);
+	// 	std::cout << "DEBUG TOKEN: " << token << " END" << std::endl;
+	// }
+	// std::cout << "\nDEBUG END\n" << std::endl;
 	return ;
 }
 
