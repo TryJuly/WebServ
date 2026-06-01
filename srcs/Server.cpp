@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cbezenco <cbezenco@student.42lausanne.c    +#+  +:+       +#+        */
+/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 14:38:06 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/01 09:56:16 by cbezenco         ###   ########.fr       */
+/*   Updated: 2026/06/01 10:34:42 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -206,10 +206,17 @@ void Server::StartServer()
 						_fds.push_back(clientPoll);
 						Client newClient(socketClient);
 						newClient.SetIdClient(IdClient++);
+						newClient.SetIndexConfigServer(fdServer);
 						NbClient++;
 						_client.push_back(newClient);
 					}
 					else {
+						int	indexConfigClient;
+						for (unsigned int i = 0; i < _client.size(); i++) {
+							if (_fds[i].fd == _client[i].GetFd())
+								indexConfigClient = _client[i].GetIndexConfigClient();
+						}
+						ConfigServer	&config = _configServer[indexConfigClient];
 						char buff[1024];
 						if (read(_fds[i].fd, buff, sizeof(buff)) == 0) {
 							close(_fds[i].fd);

@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 13:12:35 by strieste          #+#    #+#             */
-/*   Updated: 2026/05/26 13:50:51 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/01 10:32:38 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,15 @@ Client&	Client::operator=(Client const &copy)
 		_fd = copy._fd;
 	return (*this);
 }
+
+void	Client::SetIndexConfigServer(int index)
+{
+	_indexConfigServer = index;
+	return ;
+}
+
+int	Client::GetIndexConfigClient()
+{ return (_indexConfigServer); }
 
 int	Client::GetFd()
 { return (_fd); }

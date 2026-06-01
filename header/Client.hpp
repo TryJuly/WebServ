@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 13:10:16 by strieste          #+#    #+#             */
-/*   Updated: 2026/05/26 13:49:32 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/01 10:32:17 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,13 +24,16 @@ class Client
 
 		int	GetFd( void );
 		int	GetIdClient( void );
+		int	GetIndexConfigClient();
 
 		void	SetFd(int fd);
 		void	SetIdClient(int id);
+		void	SetIndexConfigServer(int index);
 
 	private:
 		int	_fd;
 		int	_idClient;
+		int	_indexConfigServer;
 };
 
 #endif
