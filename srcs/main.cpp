@@ -6,13 +6,15 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 17:15:09 by strieste          #+#    #+#             */
-/*   Updated: 2026/05/26 08:31:04 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/01 09:36:35 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <stdexcept>
 #include <iostream>
 #include "../header/Server.hpp"
+
+void	PrintFullConfigServer(Server &server);
 
 int	main(int ac, char **av)
 {
@@ -21,12 +23,44 @@ int	main(int ac, char **av)
 	try {
 		if (ac > 2)
 			throw (std::invalid_argument("Error: Invalide arguments."));
-		Server	server;
+		Server server(ac, av);
+		// PrintFullConfigServer(server);
+
 		server.StartServer();
 	}
 	catch(const std::exception& e) {
-		std::cerr << e.what() << std::endl;
+		std::cerr << e.what() << "HELLO MAN C'EST LE MAIN" << std::endl;
 		return (1);
 	}
+	std::cout << "###	FINISH	###" << std::endl;
 	return (0);
+}
+
+void	PrintFullConfigServer(Server &server)
+{
+	for (int i = 0; i < server.GetNumberConfig(); i++) {
+		ConfigServer conf = server.GetConfigServer(i);
+		std::cout << "\n###	Config server : " << i + 1 << "	###\n" << std::endl;
+		std::cout << "Port: :" << conf.GetPort() << ":" << std::endl;
+		std::cout << "Socket: :" << conf.GetSocket() << ":" << std::endl;
+		std::cout << "Max body: :" << conf.GetMaxBodySize() << ":" << std::endl;
+		std::cout << "Num location: :" << conf.GetNumberLocation() << ":" << std::endl;
+		std::cout << "Root path: :" << conf.GetRoot() << ":" << std::endl;
+		std::cout << "Index: :" << conf.GetIndex() << ":" << std::endl;
+		std::cout << "Name: :" << conf.GetServerName() << ":" << std::endl;
+
+		std::cout << "\n###	Location part	###" << std::endl;
+
+		for (int index = 0; index < conf.GetNumberLocation(); index++) {
+			ConfigLocation location = conf.GetConfigLocation(index);
+			std::cout << "Path: :" << location.GetPath() << ":" << std::endl;
+			std::cout << "root: :" << location.GetRoot() << ":" << std::endl;
+			std::cout << "index: :" << location.Getindex() << ":" << std::endl;
+			std::cout << "auto index: :" << location.GetAutoIndex() << ":" << std::endl;
+			std::cout << "redir: :" << location.GetRedir() << ":" << std::endl;
+			std::cout << "upload path: :" << location.GetUpload() << ":" << std::endl;
+			std::cout << "\n###	END location: " << index + 1 << "	###\n" << std::endl;
+		}
+		std::cout << "\n###	END : ###\n" << std::endl;
+	}
 }

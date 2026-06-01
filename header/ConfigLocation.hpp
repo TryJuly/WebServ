@@ -30,8 +30,10 @@ class ConfigLocation
 		std::string&	Getindex();
 		std::string&	GetRedir();
 		std::string&	GetUpload();
+		bool			GetAutoIndex();
 		std::string&	GetMethodes(int index);
 		std::string&	GetCGI(std::string key);
+
 
 		void	SetPath(std::string const &str);
 		void	SetRoot(std::string const &str);

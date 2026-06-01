@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 13:12:35 by strieste          #+#    #+#             */
-/*   Updated: 2026/05/26 13:14:57 by strieste         ###   ########.fr       */
+/*   Updated: 2026/05/26 13:50:51 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,12 @@
 Client::Client()
 {
 	_fd = -1;
+	return ;
+}
+
+Client::Client(int fd)
+{
+	_fd = fd;
 	return ;
 }
 
@@ -42,3 +48,11 @@ void	Client::SetFd(int fd)
 	_fd = fd;
 	return ;
 }
+void	Client::SetIdClient(int id)
+{
+	_idClient = id;
+	return ;
+}
+
+int	Client::GetIdClient( void )
+{ return (_idClient); }
