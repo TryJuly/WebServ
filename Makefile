@@ -10,7 +10,8 @@ INCLUDES = header
 OBJ_DIR = objets
 
 VPATH = srcs
-SRCS = main.cpp Server.cpp ConfigServer.cpp ConfigLocation.cpp Client.cpp Request.cpp Response.cpp
+SRCS = main.cpp Server.cpp ConfigServer.cpp ConfigLocation.cpp Client.cpp \
+		utils.cpp Request.cpp Response.cpp
 
 OBJS = ${patsubst %.cpp, ${OBJ_DIR}/%.o, ${SRCS}}
 #################################################################################################################
