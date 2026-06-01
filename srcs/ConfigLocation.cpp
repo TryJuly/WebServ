@@ -6,24 +6,14 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 09:35:48 by strieste          #+#    #+#             */
-/*   Updated: 2026/05/26 13:09:31 by strieste         ###   ########.fr       */
+/*   Updated: 2026/05/28 15:01:24 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../header/ConfigLocation.hpp"
 
 ConfigLocation::ConfigLocation()
-{
-	// _path = "\0";
-	// _root = "\0";
-	// _index = "\0";
-	// _autoindex = false;
-	// _redir = "\0";
-	// _uploadPath = "\0";
-	// _methode.clear();
-	// _cgi.clear();
-	return ;
-}
+{ return ; }
 
 ConfigLocation::ConfigLocation(ConfigLocation const &copy)
 {
@@ -37,14 +27,14 @@ ConfigLocation::~ConfigLocation()
 ConfigLocation&	ConfigLocation::operator=(ConfigLocation const &copy)
 {
 	if (this != &copy) {
+		_cgi = copy._cgi;
 		_path = copy._path;
 		_root = copy._root;
 		_index = copy._index;
-		_autoindex = copy._autoindex;
 		_redir = copy._redir;
-		_uploadPath = copy._uploadPath;
 		_methode = copy._methode;
-		_cgi = copy._cgi;
+		_autoindex = copy._autoindex;
+		_uploadPath = copy._uploadPath;
 	}
 	return (*this);
 }
@@ -63,6 +53,11 @@ std::string&	ConfigLocation::GetRedir()
 
 std::string&	ConfigLocation::GetUpload()
 { return (_uploadPath); }
+
+bool	ConfigLocation::GetAutoIndex()
+{ return (_autoindex); }
+
+
 //	Change GET POST DELETE
 std::string&	ConfigLocation::GetMethodes(int index)
 { return (_methode[index]); }

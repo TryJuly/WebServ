@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cbezenco <cbezenco@student.42lausanne.c    +#+  +:+       +#+        */
+/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 14:38:06 by strieste          #+#    #+#             */
-/*   Updated: 2026/05/26 13:33:21 by cbezenco         ###   ########.fr       */
+/*   Updated: 2026/06/01 09:12:23 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,176 +14,296 @@
 #include <iostream>
 #include <fstream>
 
-/*	Linux version	*/
-/*	Default constructor no Config File	*/
-Server::Server()
+// static char	GetIdentifier(std::string &str);
+static int	IsBalance(std::vector<std::string> &fileArray);
+static int	IsValideBloc(std::vector<std::string> &serverBloc);
+static int	FindIndexServerFD(Server &server, int fd);
+// static size_t	Countlocation(std::vector<std::string> &serverChunk);
+// static void	ServerPart(std::vector<std::string> &serverBloc, Server &server);
+// static void	LocationPart(std::vector<std::string> &serverChunk, Server &server);
+// static int	EndChunk(std::vector<std::string> &fileArray, unsigned int index);
+// static int	EndLocationBloc(std::vector<std::string> &serverChunk, unsigned int index);
+
+Server::Server(int ac, char **av)
 {
-	ConfigServer config;
-	_numberConfig = 1;
-	_configServer.push_back(config);
-	_sockAddress.sin_family = AF_INET;
-	std::cout << _configServer[0].GetPort() << std::endl;
-	_sockAddress.sin_port = htons(_configServer[0].GetPort());
-	_sockAddress.sin_addr.s_addr = INADDR_ANY; // 0.0.0.0
-	if (bind(_configServer[0].GetSocket(), reinterpret_cast<struct sockaddr *>(&_sockAddress), sizeof(_sockAddress)) != 0) {
-		std::cout << errno << " " << _configServer[0].GetSocket() << std::endl;
-		throw(std::invalid_argument("Error: Bind server."));
+	std::string	fileName;
+
+	if (ac == 2)
+		fileName = av[1];
+	else
+		fileName = "default.cnf";
+	struct stat	sStat;
+	if (stat(fileName.c_str(), &sStat) == 0 && S_ISDIR(sStat.st_mode))
+		throw (std::invalid_argument("Error: Is a directory."));
+	std::ifstream	fd(fileName.c_str(), std::ios::in);
+	if (!fd.is_open())
+		throw (std::invalid_argument("Error: Open file."));
+	std::vector<std::string>	fileArray;
+	std::string	buff;
+	_numberConfig = 0;
+	while (!fd.eof()) {
+		std::getline(fd, buff);
+		ClearSpace(buff);
+		if (!buff.empty())
+			fileArray.push_back(buff);
 	}
-	if (listen(_configServer[0].GetSocket(), 0) != 0) // Need to change connection max
-		throw(std::invalid_argument("Error: Listen server."));
-	_fdServer = epoll_create(1);	// the size number is ignored 
-	if (_fdServer == -1)
-		throw(std::invalid_argument("Error: Kqueue Server."));
-	struct epoll_event	eventServer;
-	eventServer.events = EPOLLIN | EPOLLET;
-	eventServer.data.fd = _configServer[0].GetSocket();
-	if (epoll_ctl(_fdServer, EPOLL_CTL_ADD, _configServer[0].GetSocket(), &eventServer) == -1) {
-		std::cout << _fdServer << std::endl;
-		throw(std::invalid_argument("Error: Epoll_ctl Server."));
+	fd.close();
+	ParseConfig(fileArray);
+	CleanSetError();
+	CheckConfigServer();
+	SetUpServer();
+	return ;
+}
+
+void	Server::CleanSetError()
+{
+	int size = _configServer.size();
+	for (int i = 0; i < size; i++)
+		_configServer[i].CleanSetError();
+	return ;
+}
+
+/*	Function Set up socket, fdserver bind, listen all server*/
+void	Server::SetUpServer()
+{
+	for (unsigned int i = 0; i < _configServer.size(); i++) {
+		ConfigServer	&config = _configServer[i];
+		config.SetSocket(socket(AF_INET, SOCK_STREAM, 0));
+		if (config.GetSocket() == -1)
+			throw (std::runtime_error("Error: socket() failed: " + std::string(strerror(errno))));
+		struct sockaddr_in	&sockAddr = config.GetSockAddr();
+		sockAddr.sin_family = AF_INET;
+		sockAddr.sin_port = htons(config.GetPort());
+		sockAddr.sin_addr.s_addr = INADDR_ANY; // 0.0.0.0
+		if (bind(config.GetSocket(), reinterpret_cast<struct sockaddr *>(&sockAddr), sizeof(sockAddr)) != 0)
+			throw (std::runtime_error("Error: bind() failed: " + std::string(strerror(errno))));
+		if (listen(config.GetSocket(), 0) != 0) // Need to change connection max
+			throw (std::runtime_error("Error: listen() failed: " + std::string(strerror(errno))));
+
+		struct pollfd	serverPoll;
+		serverPoll.fd = config.GetSocket();
+		serverPoll.events = POLLIN;
+		serverPoll.revents = 0;
+		_fds.push_back(serverPoll);
+	}
+	return ;
+}
+
+/*	Function verify if the configuration parsing is valid*/
+void	Server::CheckConfigServer()
+{}
+
+void	PrintConfig(Server &server)
+{
+	std::cout << "\nNumber config: " << server.GetNumberConfig() << std::endl;
+	for (int i = 0; i < server.GetNumberConfig(); i++) {
+		ConfigServer config;
+		config = server.GetConfigServer(i);
+		std::cout << "Port: :" << config.GetPort() << ":" << std::endl;
+		std::cout << "Socket: " << config.GetSocket() << std::endl;
+		std::cout << "Max Body: " << config.GetMaxBodySize() <<std::endl;
+		std::cout << "Root path: " << config.GetRoot() << std::endl;
+		std::cout << "Index: " << config.GetIndex() << std::endl;
+		try {
+			std::cout << "Error 400: " << config.GetErrorPages(400) << std::endl;
+			std::cout << "Error 404: " << config.GetErrorPages(404) << std::endl;
+			std::cout << "Error 500: " << config.GetErrorPages(500) << std::endl;
+			std::cout << "Error 502: " << config.GetErrorPages(502) << std::endl;
+			std::cout << "Error 503: " << config.GetErrorPages(503) << std::endl;
+			std::cout << "Error 504: " << config.GetErrorPages(504) << std::endl;
+		}
+		catch(const std::exception& e) {
+			std::cerr << "Error: Unset error_page value" << std::endl;;
+		}
+		std::cout << "\nEnd\n" << std::endl;
 	}
 }
-// Server::Server()
-// {
-// 	_port = 8080;
-// 	_socket = socket(AF_INET, SOCK_STREAM, 0);
-// 	if (_socket == -1)
-// 		throw(std::invalid_argument("Error: Socket server."));
-// 	_sockAddress.sin_family = AF_INET;
-// 	_sockAddress.sin_port = htons(_port);
-// 	_sockAddress.sin_addr.s_addr = INADDR_ANY; // 0.0.0.0
-// 	if (bind(_socket, reinterpret_cast<struct sockaddr *>(&_sockAddress), sizeof(_sockAddress)) != 0) {
-// 		std::cout << errno << " " << _socket << std::endl;
-// 		throw(std::invalid_argument("Error: Bind server."));
-// 	}
-// 	if (listen(_socket, 0) != 0) // Need to change connection max
-// 		throw(std::invalid_argument("Error: Listen server."));
-// 	_fdServer = epoll_create(1);	// the size number is ignored 
-// 	if (_fdServer == -1)
-// 		throw(std::invalid_argument("Error: Kqueue Server."));
-// 	struct epoll_event	eventServer;
-// 	eventServer.events = EPOLLIN | EPOLLET;
-// 	eventServer.data.fd = _socket;
-// 	if (epoll_ctl(_fdServer, EPOLL_CTL_ADD, _socket, &eventServer) == -1) {
-// 		std::cout << _fdServer << std::endl;
-// 		throw(std::invalid_argument("Error: Epoll_ctl Server."));
-// 	}
-// }
 
-/*	Linux version	*/
+void	Server::AcceptClient(int index)
+{
+	int fdServer = FindIndexServerFD(*this, _fds[index].fd);
+	if (fdServer == -1)
+		throw (std::runtime_error("Error: Find FD serveur failed"));
+	struct sockaddr_in	&clientAddr = _configServer[fdServer].GetSockAddr();
+	socklen_t addrLen = sizeof(clientAddr);
+	int socketClient = accept(_fds[index].fd, reinterpret_cast<struct sockaddr *>(&clientAddr), &addrLen);
+
+	struct pollfd clientPoll;
+	clientPoll.fd = socketClient;
+	clientPoll.events = POLLIN;
+	clientPoll.revents = 0;
+	_fds.push_back(clientPoll);
+	Client newClient(socketClient);
+	newClient.SetIdClient(_numberClient++);
+	_client.push_back(newClient);
+	return ;
+}
+
 void Server::StartServer()
 {
-	struct epoll_event	changeList[MAX_EVENTS];
 	int NbRequest = 0;
 	int NbClient = 0;
+	int	IdClient = 0;
 	while (true) {
 		std::cout << "\n###	Wait Request Client	###\n" << std::endl;
-		int nfds = epoll_wait(_fdServer, changeList, MAX_EVENTS, -1);	// -1 wait unlimited
-		for (int i = 0; i < nfds; i++) {
-			for (int j = 0; j < _numberConfig; j++) {
-				if (changeList[i].data.fd == _configServer[j].GetSocket()) {
-					std::cout << "###	INFOS	###\n" << std::endl;
-					std::cout << "Recu " << changeList[i].data.fd << " socket: " << _configServer[0].GetSocket() << " event: " << changeList[i].events << " data ptr: " << changeList[i].data.ptr << std::endl;
-					std::cout << "\n###	FIN INFOS	###\n" << std::endl;
-					socklen_t addrLen = sizeof(_sockAddress);
-					int socketClient = accept(_configServer[0].GetSocket(), reinterpret_cast<struct sockaddr *>(&_sockAddress), &addrLen);
-					NbClient++;
-					struct epoll_event clientEvent;
-					clientEvent.events = EPOLLIN | EPOLLET;
-					clientEvent.data.fd = socketClient;
-					epoll_ctl(_fdServer, EPOLL_CTL_ADD, socketClient, &clientEvent);
-				}
-				else {
-					char buff[1024];
-					if (read(changeList[i].data.fd, buff, sizeof(buff)) == 0) {
-						close(changeList[i].data.fd);
-						NbClient--;
+		int nfds = _fds.size();
+		int nb = poll(&_fds[0], nfds , -1);
+		if (nb == -1)
+			throw (std::invalid_argument("Error: Poll."));
+		for (unsigned int i = 0; i < _fds.size(); i++) {
+				if (_fds[i].revents & POLLIN) {
+					if (IsSocketServer(_fds[i].fd)) {
+						int fdServer = FindIndexServerFD(*this, _fds[i].fd);
+						if (fdServer == -1)
+							throw (std::runtime_error("Error: Find FD serveur failed"));
+						struct sockaddr_in	&clientAddr = _configServer[fdServer].GetSockAddr();
+						socklen_t addrLen = sizeof(clientAddr);
+						int socketClient = accept(_fds[i].fd, reinterpret_cast<struct sockaddr *>(&clientAddr), &addrLen);
+
+						struct pollfd clientPoll;
+						clientPoll.fd = socketClient;
+						clientPoll.events = POLLIN;
+						clientPoll.revents = 0;
+						_fds.push_back(clientPoll);
+						Client newClient(socketClient);
+						newClient.SetIdClient(IdClient++);
+						NbClient++;
+						_client.push_back(newClient);
 					}
 					else {
-					std::cout << "###	Client Message:	###\n" << std::endl;
-					std::cout << buff << std::endl;
-					std::cout << "###	End client message	###\n" << std::endl;
-					struct stat sendClient;
-					stat("index.html", &sendClient);
-					std::cout << sendClient.st_size << std::endl;
-					std::string response = "HTTP/1.1 200 OK\r\nContent-Type:text/html\r\nContent-Length:405";
-					response.append("\r\n\r\n");
-					std::ifstream ifs;
-					ifs.open("index.html");
-					if (ifs.is_open()) {
-						std::cout << "All good" << std::endl;
+						char buff[1024];
+						if (read(_fds[i].fd, buff, sizeof(buff)) == 0) {
+							close(_fds[i].fd);
+							_fds.erase(_fds.begin() + i);	// supprimer la struct
+							NbClient--;
+						}
+						else {
+						std::cout << "###	Client Message:	###\n" << std::endl;
+						std::cout << buff << std::endl;
+						std::cout << "###	End client message	###\n" << std::endl;
+						struct stat sendClient;
+						stat("index.html", &sendClient);
+						std::cout << sendClient.st_size << std::endl;
+						std::string response = "HTTP/1.1 200 OK\r\nContent-Type:text/html\r\nContent-Length:405";
+						response.append("\r\n\r\n");
+						std::ifstream ifs;
+						ifs.open("index.html");
+						if (ifs.is_open()) {
+							std::cout << "All good" << std::endl;
+						}
+						std::string line;
+						while (std::getline(ifs, line)) {
+							response.append(line);
+							response.append("\n");					
+						}
+						write(_fds[i].fd, response.c_str(), response.size());
+						//write(changeList[i].data.fd, "HTTP/1.1 200 OK\r\nContent-Length:13\r\n\r\nHello, world!", 52);
+						std::cout << "HAHAHA";
 					}
-					std::string line;
-					while (std::getline(ifs, line)) {
-						response.append(line);
-						response.append("\n");					
-					}
-					write(changeList[i].data.fd, response.c_str(), response.size());
-					//write(changeList[i].data.fd, "HTTP/1.1 200 OK\r\nContent-Length:13\r\n\r\nHello, world!", 52);
-					std::cout << "HAHAHA";
 				}
 			}
 			NbRequest++;
 			std::cout << "Nb Request is: " << NbRequest << std::endl;
 			std::cout << "Nb Client is: " << NbClient << std::endl;
 		}
-		}	
-	}
+	}	
 }
 
-/*	Constructor with Config File	*/
-// Server::Server(char **av)
-// {}
+static int	FindIndexServerFD(Server &server, int fd)
+{
+	for (int i = 0; i < server.GetNumberConfig(); i++) {
+		ConfigServer &config = server.GetConfigServer(i);
+		if (fd == config.GetSocket())
+			return (config.GetSocket());
+	}
+	return (-1);
+}
 
-/*			MacOS version			*/
-// Server::Server()
-// {
-// 	_port = 8080;
-// 	_socket = socket(AF_INET, SOCK_STREAM, 0);
-// 	if (_socket == -1)
-// 		throw(std::invalid_argument("Error: Socket server."));
-// 	_sockAddress.sin_family = AF_INET;
-// 	_sockAddress.sin_port = htons(_port);
-// 	_sockAddress.sin_addr.s_addr = INADDR_ANY; // 0.0.0.0
-// 	if (bind(_socket, reinterpret_cast<struct sockaddr *>(&_sockAddress), sizeof(_sockAddress)) != 0) {
-// 		std::cout << errno << " " << _socket << std::endl;
-// 		throw(std::invalid_argument("Error: Bind server."));
-// 	}
-// 	if (listen(_socket, 0) != 0) // Need to change connection max
-// 		throw(std::invalid_argument("Error: Listen server."));
-// 	_fdServer = kqueue();
-// 	if (_fdServer == -1)
-// 		throw(std::invalid_argument("Error: Kqueue Server."));
-// 	struct kevent changeList;
-// 	EV_SET(&changeList, _socket, EVFILT_READ, EV_ADD, 0, 0, NULL);
-// 	kevent(_fdServer, &changeList, 1, NULL, 0, NULL);
-// }
+void	Server::ParseConfig(std::vector<std::string> &fileArray)
+{
+	int isBlance = IsBalance(fileArray);
+	if (isBlance > 0)
+		throw (std::invalid_argument("Error: Missing '}' in config file."));
+	else if (isBlance < 0)
+		throw (std::invalid_argument("Error: Missing '{' in config file."));
+	unsigned int i = (fileArray.size() - 1);
+	for (int j = 0; fileArray[i][j] != '}'; i--) {
+		if (fileArray[i][0] != '}' && fileArray[i][0] != '#')
+			throw (std::invalid_argument("Error: Invalid syntaxe config file."));
+	}
 
-// /*			MacOS version			*/
-// void Server::StartServer()
-// {
-// 	struct kevent eventList[MAX_EVENTS];
-// 	while (true) {
-// 		int nfds = kevent(_fdServer, NULL, 0, eventList, MAX_EVENTS, NULL);
-// 		for (int i = 0; i < nfds; i++) {
-// 			if (eventList[i].ident == static_cast<unsigned long>(_socket)) {
-// 				// std::cout << "Recu " << _event.data.fd << " socket: " << _socket << " event: " << _event.events << " data ptr: " << _event.data.ptr << std::endl;
-// 				socklen_t addrLen = sizeof(_sockAddress);
-// 				int newSocket = accept(_socket, reinterpret_cast<struct sockaddr *>(&_sockAddress), &addrLen);
-// 				struct kevent eventClient;
-// 				EV_SET(&eventClient, newSocket, EVFILT_READ, EV_ADD, 0, 0, NULL);
-// 				kevent(_fdServer, &eventClient, 1, NULL, 0, NULL);
-// 				std::cout << "new client fd: " << newSocket << std::endl;
-// 			}
-// 			else {
-// 				char buff[1024];
-// 				if (read(eventList[i].ident, buff, sizeof(buff)) == 0)
-// 					close(eventList[i].ident);
-// 				std::cout << "Client message: " << buff << "End" << std::endl;
-// 				write(eventList[i].ident, "HTTP/1.1 200 OK\r\nContent-Length:13\r\n\r\nHello, world!", 52);
-// 			}
-// 		}
-// 	}
-// }
+	size_t	start = 0;
+	size_t	index = 0;
+	while (start < fileArray.size()) {
+		ssize_t end = EndChunk(fileArray, start);
+		if (end != -1) {
+			std::vector<std::string> serverChunk;
+			for (int i = start; i < end; i++)
+				serverChunk.push_back(fileArray[i]);
+
+			if (IsValideBloc(serverChunk))
+				throw (std::invalid_argument("Error: Invalid syntaxe."));
+			ConfigServer conf;
+			_configServer.push_back(conf);
+
+			_configServer[index].FillConfigServer(serverChunk);
+			start = end;
+			index++;
+			_numberConfig++;
+		}
+		else
+			break;
+	}
+	return ;
+}
+
+static int IsValideBloc(std::vector<std::string> &serverBloc)
+{
+	std::string first;
+	for (unsigned int i = 0; i < serverBloc.size(); i++) {
+		if (serverBloc[i][0] == '#')
+			continue ;
+		for (int j = 0; j < serverBloc[i][j]; j++) {
+			if (serverBloc[i][j] == ' ')
+				continue ;
+			first.push_back(serverBloc[i][j]);
+		}
+		break ;
+	}
+	if (first.compare("server{"))
+		return (1);
+	for (unsigned int i = 0; i < serverBloc.size(); i++) {
+		if (serverBloc[i][0] != '{' && serverBloc[i][0] != '}' && serverBloc[i].size() < 5)
+			return (1);
+	}
+	return (0);
+}
+
+static int	IsBalance(std::vector<std::string> &fileArray)
+{
+	int balance = 0;
+	for (unsigned int i = 0; i < fileArray.size(); i++) {
+		for (int j = 0; fileArray[i][j]; j++) {
+			if (fileArray[i][j] == '{')
+				balance++;
+			else if (fileArray[i][j] == '}') {
+				balance--;
+				if (balance < 0)
+					return (-1);
+			}
+		}
+	}
+	return (balance);
+}
+
+bool	Server::IsSocketServer(int fd)
+{
+	for (unsigned int i = 0; i < _configServer.size(); i++) {
+		if (fd == _configServer[i].GetSocket())
+			return (true);
+	}
+	return (false);
+}
 
 Server::Server(Server const &copy)
 {
@@ -204,3 +324,46 @@ Server &Server::operator=(Server const &copy)
 void Server::StopServer()
 {
 }
+
+void	Server::SetFdServer(int fd)
+{
+	(void)fd;
+	// _fdServer = fd;
+	return ;
+}
+
+void	Server::SetNumberConfig(int number)
+{
+	_numberConfig = number;
+	return ;
+}
+
+void	Server::SetSockAddr(struct sockaddr_in sockaddr)
+{
+	(void) sockaddr;
+	// _sockAddress = sockaddr;
+	return ;
+}
+
+void	Server::SetConfigServer(ConfigServer const &config)
+{
+	_configServer.push_back(config);
+	return ;
+}
+
+void	Server::SetClient(Client const &client)
+{
+	_client.push_back(client);
+	return ;
+}
+
+// int	Server::GetFdServer( int index )
+// {
+// 	return (_fdServer[index]);
+// }
+
+int	Server::GetNumberConfig( void )
+{ return (_numberConfig); }
+
+ConfigServer&	Server::GetConfigServer(int index)
+{ return (_configServer[index]); }
