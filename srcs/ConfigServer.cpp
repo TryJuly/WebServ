@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 08:36:43 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/03 10:47:52 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/03 15:13:54 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,24 +22,56 @@ static void	FillConfigLocation(ConfigLocation &config, std::vector<std::string> 
 /*	Set Configuration Minumum	*/
 ConfigServer::ConfigServer()
 {
+	struct stat	st;
 	_port = 8080;
 	_socket = -1;
 	_maxBodySize = 1048576;
-	_rootPath = "./";	// PATH Root TODO
-	_index = "./";	// PATH Index	TODO
+	
+	if (stat("./var/www", &st) != 0)
+		throw (std::invalid_argument("Error: Invalid path : ./var/www"));
+	_rootPath = "./var/www";	// PATH Root TODO
+
+	if (stat("./var/www/html", &st) != 0)
+		throw (std::invalid_argument("Error: Invalid path : ./var/www/html"));
+	_index = "./var/www/html";	// PATH Index	TODO
 	_serverName = "localhost";
-	_errorPages.insert(std::pair<int, std::string>(400, "/errors/400.html"));
-	_errorPages.insert(std::pair<int, std::string>(401, "/errors/401.html"));
-	_errorPages.insert(std::pair<int, std::string>(403, "/errors/403.html"));
-	_errorPages.insert(std::pair<int, std::string>(404, "/errors/404.html"));
-	_errorPages.insert(std::pair<int, std::string>(500, "/errors/500.html"));
-	_errorPages.insert(std::pair<int, std::string>(502, "/errors/502.html"));
-	_errorPages.insert(std::pair<int, std::string>(503, "/errors/503.html"));
-	_errorPages.insert(std::pair<int, std::string>(504, "/errors/504.html"));
+
+	if (stat("./var/www/errors/400.html", &st) != 0)
+		throw (std::invalid_argument("Error: Invalid path : ./var/www/errors/400.html"));
+	_errorPages.insert(std::pair<int, std::string>(400, "./var/www/errors/400.html"));
+	
+	if (stat("./var/www/errors/401.html", &st) != 0)
+		throw (std::invalid_argument("Error: Invalid path : ./var/www/errors/401.html"));
+	_errorPages.insert(std::pair<int, std::string>(401, "./var/www/errors/401.html"));
+
+	if (stat("./var/www/errors/403.html", &st) != 0)
+		throw (std::invalid_argument("Error: Invalid path : ./var/www/errors/403.html"));
+	_errorPages.insert(std::pair<int, std::string>(403, "./var/www/errors/403.html"));
+
+	if (stat("./var/www/errors/404.html", &st) != 0)
+		throw (std::invalid_argument("Error: Invalid path : ./var/www/errors/404.html"));
+	_errorPages.insert(std::pair<int, std::string>(404, "./var/www/errors/404.html"));
+
+	if (stat("./var/www/errors/500.html", &st) != 0)
+		throw (std::invalid_argument("Error: Invalid path : ./var/www/errors/500.html"));
+	_errorPages.insert(std::pair<int, std::string>(500, "./var/www/errors/500.html"));
+
+	if (stat("./var/www/errors/502.html", &st) != 0)
+		throw (std::invalid_argument("Error: Invalid path : ./var/www/errors/502.html"));
+	_errorPages.insert(std::pair<int, std::string>(502, "./var/www/errors/502.html"));
+
+	if (stat("./var/www/errors/503.html", &st) != 0)
+		throw (std::invalid_argument("Error: Invalid path : ./var/www/errors/503.html"));
+	_errorPages.insert(std::pair<int, std::string>(503, "./var/www/errors/503.html"));
+
+	if (stat("./var/www/errors/504.html", &st) != 0)
+		throw (std::invalid_argument("Error: Invalid path : ./var/www/errors/504.html"));
+	_errorPages.insert(std::pair<int, std::string>(504, "./var/www/errors/504.html"));
 
 	ConfigLocation config;
-	config.SetPath("/");
+	config.SetPath(_rootPath + "/");
 	config.SetMethodes("GET");
+	config.SetRoot(_rootPath);
 	AddConfigLocation(config);
 
 	return ;
@@ -65,12 +97,6 @@ void	ConfigServer::CleanSetError()
 	_checkDoubleError.clear();
 	return ;
 }
-
-// ConfigServer::ConfigServer(std::string const &file)
-// {
-// 	(void) file;
-// 	return ;
-// }
 
 ConfigServer::ConfigServer(ConfigServer const &copy)
 {
@@ -168,7 +194,6 @@ static char	GetIdentifierLocation(std::string &token)
 
 static void	FillConfigLocation(ConfigLocation &config, std::vector<std::string> &locationChunk, std::string &path)
 {
-	config.SetPath(path);
 	std::set<std::string>	checkDouble;
 	for (unsigned int i = 1; i < locationChunk.size(); i++) {
 		size_t	endToken = locationChunk[i].find_first_of(" \t");
@@ -226,6 +251,7 @@ static void	FillConfigLocation(ConfigLocation &config, std::vector<std::string> 
 			break;
 		}
 	}
+	config.SetPath(config.GetRoot() + path);
 	return ;
 }
 

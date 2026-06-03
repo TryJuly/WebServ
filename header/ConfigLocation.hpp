@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigLocation.hpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cbezenco <cbezenco@student.42lausanne.c    +#+  +:+       +#+        */
+/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/25 13:20:16 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/02 11:23:51 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/03 14:39:38 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@
 # include <sstream>
 # include <iostream>
 # include <exception>
+# include <sys/stat.h>
 
 class ConfigLocation
 {
