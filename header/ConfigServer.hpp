@@ -6,29 +6,35 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/25 12:51:30 by strieste          #+#    #+#             */
-/*   Updated: 2026/05/28 15:21:13 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/03 09:16:51 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef CONFIGSERVER_HPP
 # define CONFIGSERVER_HPP
 
-# include <string>
 # include <map>
-# include <vector>
-# include <sys/socket.h>
-# include <exception>
-# include <iostream>
 # include <set>
+# include <string>
+# include <vector>
 # include <cstdlib>	// std::atoi
+# include <iostream>
+# include <exception>
 # include <netinet/in.h>
+# include <sys/socket.h>
 # include "ConfigLocation.hpp"
+
+# define RED     "\033[31m"      /* Red */
+# define GREEN   "\033[32m"      /* Green */
+# define YELLOW  "\033[33m"      /* Yellow */
+# define BLUE    "\033[34m"      /* Blue */
+# define RESET   "\033[0m"
 
 class ConfigServer
 {
 	public:
 		ConfigServer();
-		ConfigServer(std::string const &file);
+		// ConfigServer(std::string const &file);
 		ConfigServer(ConfigServer const &copy);
 		~ConfigServer();
 		ConfigServer&	operator=(ConfigServer const &copy);
@@ -64,13 +70,13 @@ class ConfigServer
 		int	_socket;
 		int	_maxBodySize;
 		int	_numberLocation;
-		std::string	_rootPath;
 		std::string	_index;
+		std::string	_rootPath;
 		std::string	_serverName;
-		std::map<int, std::string>	_errorPages;
-		std::vector<ConfigLocation>	_locations;
-		std::set<int>	_checkDoubleError;
 		struct sockaddr_in	_sockAddress;
+		std::set<int>	_checkDoubleError;
+		std::vector<ConfigLocation>	_locations;
+		std::map<int, std::string>	_errorPages;
 };
 
 void	ClearSpace(std::string &str);
