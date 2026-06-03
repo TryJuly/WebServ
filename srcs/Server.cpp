@@ -6,7 +6,7 @@
 /*   By: cbezenco <cbezenco@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 14:38:06 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/01 09:56:16 by cbezenco         ###   ########.fr       */
+/*   Updated: 2026/06/01 11:08:26 by cbezenco         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -206,11 +206,19 @@ void Server::StartServer()
 						_fds.push_back(clientPoll);
 						Client newClient(socketClient);
 						newClient.SetIdClient(IdClient++);
+						newClient.SetFdConfigServer(fdServer);
 						NbClient++;
 						_client.push_back(newClient);
 					}
 					else {
 						char buff[1024];
+						int indexConfigServer = 0;
+						for (unsigned int i = 0; i < _client.size(); i++) {
+							if (_fds[i].fd == _client[i].GetFdConfigServer()) {
+								indexConfigServer = i;
+							}
+						}
+						ConfigServer &config = _configServer[indexConfigServer];
 						if (read(_fds[i].fd, buff, sizeof(buff)) == 0) {
 							close(_fds[i].fd);
 							_fds.erase(_fds.begin() + i);	// supprimer la struct
@@ -221,7 +229,7 @@ void Server::StartServer()
 						Request req(buff);
 						std::cout << "###	End client message	###\n" << std::endl;
 
-						Response rep(req);
+						Response rep(req, config);
 						std::string response = rep.printResponse();
 						write(_fds[i].fd, response.c_str(), response.size());
 						std::cout << "###  Server Message: ###\n\n" << response << "\n###  End server message ###\n" << std::endl;

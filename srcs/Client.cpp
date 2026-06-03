@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
+/*   By: cbezenco <cbezenco@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 13:12:35 by strieste          #+#    #+#             */
-/*   Updated: 2026/05/26 13:50:51 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/01 11:07:01 by cbezenco         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,3 +56,12 @@ void	Client::SetIdClient(int id)
 
 int	Client::GetIdClient( void )
 { return (_idClient); }
+
+int Client::GetFdConfigServer( void )
+{ return (_fdConfigServer); }
+
+void Client::SetFdConfigServer( int fd)
+{
+	_fdConfigServer = fd;
+	return ;
+}

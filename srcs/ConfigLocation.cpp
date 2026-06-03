@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigLocation.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
+/*   By: cbezenco <cbezenco@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 09:35:48 by strieste          #+#    #+#             */
-/*   Updated: 2026/05/28 15:01:24 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/01 11:25:12 by cbezenco         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -117,3 +117,12 @@ void	ConfigLocation::SetCGI(std::string const &key, std::string const &value)
 	_cgi.insert(std::pair<std::string, std::string>(key, value));
 	return ;
 }
+
+bool    ConfigLocation::GetBoolGet()
+{ return (_get); }
+
+bool    ConfigLocation::GetBoolPost()
+{ return (_post); }
+
+bool    ConfigLocation::GetBoolDelete()
+{ return (_delete); }
