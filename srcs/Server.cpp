@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 14:38:06 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/03 14:36:04 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/03 15:30:09 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -219,7 +219,6 @@ void Server::StartServer()
 			std::cout << "Nb Request is: " << NbRequest << std::endl;
 			std::cout << "Nb Client is: " << NbClient << std::endl;
 		}
-		return ;
 		// NbRequest++;
 	}
 }	
