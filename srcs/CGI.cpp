@@ -1,16 +1,16 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Cgi.cpp                                            :+:      :+:    :+:   */
+/*   CGI.cpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
+/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/02 15:35:11 by seully            #+#    #+#             */
-/*   Updated: 2026/06/02 18:17:45 by seully           ###   ########.fr       */
+/*   Updated: 2026/06/03 15:16:55 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../header/Cgi.hpp"
+#include "../header/CGI.hpp"
 
 CGI::CGI()
 {}
@@ -24,5 +24,5 @@ CGI::~CGI()
 CGI&	CGI::operator=(CGI const &copy)
 {}
 
-std::string	CGI::Execute(std::string const &request, ConfigServer const &config, char **envp)
+std::string	CGI::Execute(std::string const &request, ConfigServer const &config)
 {}

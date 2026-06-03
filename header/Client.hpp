@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cbezenco <cbezenco@student.42lausanne.c    +#+  +:+       +#+        */
+/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 13:10:16 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/01 11:07:20 by cbezenco         ###   ########.fr       */
+/*   Updated: 2026/06/03 11:23:15 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,14 +24,15 @@ class Client
 
 		int	GetFd( void );
 		int	GetIdClient( void );
-		int GetFdConfigServer( void );
+		int	GetFdConfigServer( void );
+		int	GetIndexConfigClient();
 		
 		void	SetFdConfigServer(int fd);
-		int		GetIndexConfigClient();
 
 		void	SetFd(int fd);
 		void	SetIdClient(int id);
 		void	SetIndexConfigServer(int index);
+
 
 	private:
 		int	_fd;

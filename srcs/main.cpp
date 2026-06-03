@@ -6,10 +6,11 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 17:15:09 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/03 09:44:44 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/03 13:15:23 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include <signal.h>
 #include <iostream>
 #include <stdexcept>
 #include "../header/Server.hpp"
@@ -24,10 +25,11 @@ int	main(int ac, char **av)
 		if (ac > 2)
 			throw (std::invalid_argument("Error: Too many arguments."));
 		Server server(ac, av);
+		std::cout << server.GetNumberConfig() << std::endl;
 
-		// PrintFullConfigServer(server);
+		PrintFullConfigServer(server);
 
-		server.StartServer();
+		// server.StartServer();
 	}
 	catch(const std::exception& e) {
 		std::cerr << RED << e.what() << RESET << std::endl;
