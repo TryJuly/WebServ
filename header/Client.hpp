@@ -29,11 +29,17 @@ class Client
 		void	SetFd(int fd);
 		void	SetIdClient(int id);
 		void	SetFdConfigServer(int fd);
+		int	GetIndexConfigClient();
+
+		void	SetFd(int fd);
+		void	SetIdClient(int id);
+		void	SetIndexConfigServer(int index);
 
 	private:
 		int	_fd;
 		int	_idClient;
 		int _fdConfigServer;
+		int	_indexConfigServer;
 };
 
 #endif
