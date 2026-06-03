@@ -26,10 +26,8 @@ class Client
 		int	GetIdClient( void );
 		int GetFdConfigServer( void );
 		
-		void	SetFd(int fd);
-		void	SetIdClient(int id);
 		void	SetFdConfigServer(int fd);
-		int	GetIndexConfigClient();
+		int		GetIndexConfigClient();
 
 		void	SetFd(int fd);
 		void	SetIdClient(int id);

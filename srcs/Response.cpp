@@ -40,9 +40,17 @@ Response::Response( Request& req, ConfigServer& config) {
 
 void Response::getResponse(Request& req, ConfigServer& config) {
     std::string path = req.getPath();
-    int index_location = config.FindLocationPath(path);
+    int index_location;
+    if (path != "/") {
+        int index = path.find_first_of('/', 1);
+        std::string loc_path = path.substr(0, index);
+        std::cout << loc_path << std::endl;
+        index_location = config.FindLocationPath(loc_path);
+    }
+    else
+        index_location = config.FindLocationPath(path);
     if (index_location < 0) {
-        sendError("404");
+        sendError(404, config);
         return;
     }
     else if (config.GetConfigLocation(index_location).GetBoolGet() != 1) {
@@ -51,19 +59,23 @@ void Response::getResponse(Request& req, ConfigServer& config) {
     }
 
     if (path == "/") {
+        std::string f_path = config.GetRoot() + "/" + config.GetIndex();
+        std::cout << f_path << std::endl;
         _status = "HTTP/1.1 200 OK\r\n";
         std::pair<std::string, std::string> type("Content-Type:", "text/html");
         struct stat sb;
-        stat("index.html", &sb);
+        stat(f_path.c_str(), &sb);
         std::pair<std::string, std::string> length("Content-Length:", return_file_length(sb.st_size));
         _headers.insert(type);
         _headers.insert(length);
-        _body = extract_file("index.html");
+        _body = extract_file(f_path);
     }
     else {
+        std::string f_path = config.GetRoot() + path;
+        std::cout << f_path << std::endl;
         struct stat sb;
-        if (stat(path.c_str(), &sb) != 0) {
-            sendError("404");
+        if (stat(f_path.c_str(), &sb) != 0) {
+            sendError(404, config);
             return;
         }
         _status = "HTTP/1.1 200 OK\r\n";
@@ -71,7 +83,7 @@ void Response::getResponse(Request& req, ConfigServer& config) {
         std::pair<std::string, std::string> length("Content-Length:", return_file_length(sb.st_size));
         _headers.insert(type);
         _headers.insert(length);
-        _body = extract_file(path.c_str());
+        _body = extract_file(f_path.c_str());
     }
 }
 
@@ -125,16 +137,27 @@ std::string Response::printResponse(void) {
     return (response);
 }
 
-void Response::sendError(const char *status) {
-    std::cout << status << std::endl;
-    _status = "HTTP/1.1 404 Not Found\r\n";
+void Response::sendError(int status, ConfigServer& config) {
+    std::string err_file;
+    switch (status) {
+        
+        case 404:
+            err_file = config.GetErrorPages(status);
+            std::cout << err_file << std::endl;
+            _status = "HTTP/1.1 404 Not Found\r\n";
+            break ;
+        
+        default:
+            std::cout << "Error" << std::endl;
+            break;
+    }
     struct stat sb;
-    stat("404.html", &sb);
+    stat(err_file.c_str(), &sb);
     std::pair<std::string, std::string> type("Content-Type:", "text/html");
     std::pair<std::string, std::string> length("Content-Length:", return_file_length(sb.st_size));
     _headers.insert(type);
     _headers.insert(length);
-    _body = extract_file("404.html");
+    _body = extract_file(err_file);
 }
 
 std::string extract_file(std::string filename) {

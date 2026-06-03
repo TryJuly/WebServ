@@ -35,7 +35,7 @@ class Response {
         std::string getStatus(void) const;
         void setStatus(std::string status);
         std::string printResponse(void);
-        void sendError(const char *status);
+        void sendError(int status, ConfigServer& config);
 };
 
 std::string extract_file(std::string filename);
