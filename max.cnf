@@ -13,7 +13,7 @@ server {
         autoindex off;
     }
 
-    location /upload {
+    location /uploads {
         methods GET POST;
         upload_path ./var/www/uploads;
         autoindex off;
@@ -22,7 +22,7 @@ server {
     location /files {
         methods GET DELETE;
         autoindex on;
-        root ./var/www/files;
+        root ./var/www;
     }
 
     location /cgi-bin {
@@ -31,7 +31,7 @@ server {
     }
 
     location /old {
-        redirect 301 /new;
+        redirect 301 ./var/www/new;
     }
 }
 
@@ -70,7 +70,7 @@ server {
         autoindex off;
     }
 
-    location /upload {
+    location /uploads {
         methods POST;
         upload_path ./var/www/admin/uploads;
     }
@@ -114,7 +114,7 @@ server {
         autoindex on;
     }
 
-    location /upload {
+    location /uploads {
         methods GET POST;
         upload_path ./var/www/media/uploads;
     }

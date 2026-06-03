@@ -16,27 +16,26 @@ server {
         autoindex off;
     }
 
-    location /upload {
+    location /uploads {
         methods GET POST;
         autoindex off;
-        upload_path ./var/www/uploads;
+        upload_path ./var/www;
     }
-
 
     location /files {
         methods GET DELETE;
         autoindex on;
-        root ./var/www/files;
+        root ./autre;
     }
 
     location /old {
         methods GET;
-        redirect 301 /new;
+        redirect 301 ./var/www/new;
     }
 
     location /new {
         methods GET;
-        root ./var/www/new;
+        root ./var/www;
         index index.html;
     }
 
@@ -51,7 +50,7 @@ server {
  
     listen 8081;
     server_name test.local;
-    root ./;
+    root ./var/www;
     index index.html;
     client_max_body_size 512;
 
@@ -61,9 +60,9 @@ server {
         autoindex on;
 		methods GET POST DELETE;
         #index index.html;
-        redirect 301 /new;
+        redirect 301 ./var/www/new;
         #redirect 301 /new;
-        root ./var/www/new;
+        root ./var/www;
         cgi .php /usr/bin/php-cgi;
         upload_path ./var/www/uploads;
     }

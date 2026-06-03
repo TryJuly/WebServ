@@ -1,0 +1,10 @@
+listen 8080;
+
+server {
+    listen 8080;
+    root ./var/www/html;
+
+    location / {
+        methods GET;
+    }
+}

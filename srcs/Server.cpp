@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 14:38:06 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/01 11:08:26 by cbezenco         ###   ########.fr       */
+/*   Updated: 2026/06/03 14:36:04 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,7 +82,27 @@ void	Server::SetUpServer()
 
 /*	Function to verify if the configuration parsing is valid*/
 void	Server::CheckConfigServer()
-{}
+{
+	struct stat	sstat;
+	for (size_t	i = 0; i < _configServer.size(); i++) {
+		ConfigServer &configServer = GetConfigServer(i);
+		if (configServer.GetPort() < 0 || configServer.GetPort() > 65535)
+			throw (std::invalid_argument("Error: Invalid port."));
+
+		 for (int j = 0; j < configServer.GetNumberLocation(); j++) {
+			ConfigLocation &location = configServer.GetConfigLocation(j);
+			if (stat(location.GetPath().c_str(), &sstat) != 0)
+				throw (std::invalid_argument("Error: Invalid path location: " + location.GetPath()));
+			if (stat(location.GetRoot().c_str(), &sstat) != 0)
+				throw (std::invalid_argument("Error: Invalid path location: " + location.GetRoot()));
+			if (!location.GetUpload().empty() && stat(location.GetUpload().c_str(), &sstat) != 0)
+				throw (std::invalid_argument("Error: Invalid path location: " + location.GetUpload()));
+			if (!location.GetRedir().empty() && stat(location.GetRedir().c_str(), &sstat) != 0)
+				throw (std::invalid_argument("Error: Invalid path location: " + location.GetRedir()));
+		 }
+	}
+	return ;
+}
 
 void	PrintConfig(Server &server)
 {
@@ -199,7 +219,8 @@ void Server::StartServer()
 			std::cout << "Nb Request is: " << NbRequest << std::endl;
 			std::cout << "Nb Client is: " << NbClient << std::endl;
 		}
-		NbRequest++;
+		return ;
+		// NbRequest++;
 	}
 }	
 

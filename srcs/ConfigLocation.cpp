@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigLocation.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cbezenco <cbezenco@student.42lausanne.c    +#+  +:+       +#+        */
+/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 09:35:48 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/02 11:23:01 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/03 14:46:55 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -106,8 +106,14 @@ void	ConfigLocation::SetRedir(std::string const &str)
 {
 	size_t	endKey = str.find_first_of(" \t");
 	if (endKey == std::string::npos)
-			throw (std::invalid_argument("Error: Invalid syntaxe line: " + str));
+			throw (std::invalid_argument("Error: Invalid syntax line: " + str));
 	std::string val = str.substr(endKey + 1, str.size() - endKey);
+	
+
+	//		ADD
+	struct stat st;
+	if (stat(val.c_str(), &st) != 0)
+		throw (std::invalid_argument("Error: Invalid path location: " + val));
 	_redir = val;
 	return ;
 }
@@ -117,23 +123,6 @@ void	ConfigLocation::SetUpload(std::string const &str)
 	_uploadPath = str;
 	return ;
 }
-
-// void	ConfigLocation::SetBoolGet( void )
-// {
-// 	_get = true;
-// 	return ;
-// }
-
-// void	ConfigLocation::SetBoolPost( void )
-// {
-// 	_post = true;
-// 	return ;
-// }
-// void	ConfigLocation::SetBoolDelete( void )
-// {
-// 	_delete = true;
-// 	return ;
-// }
 
 void	ConfigLocation::SetMethodes(std::string const &str)
 {
@@ -162,22 +151,30 @@ void	ConfigLocation::SetCGI(std::string const &value)
 {
 	size_t	endKey = value.find_first_of(" \t");
 	if (endKey == std::string::npos)
-			throw (std::invalid_argument("Error: Invalid syntaxe line555: " + value));
+			throw (std::invalid_argument("Error: Invalid syntax line: " + value));
 
 	std::string key = value.substr(0, endKey);
 	std::string val = value.substr(endKey + 1, value.size() - endKey);
+
+
+	// ADD
+	if (key.compare(".py") && key.compare(".php"))
+		throw (std::invalid_argument("Error: Cgi not handle: " + key));
+	struct stat st;
+	if (stat(val.c_str(), &st) != 0)
+		throw (std::invalid_argument("Error: Invalid location path cgi: " + val));
 	_cgi.insert(std::pair<std::string, std::string>(key, val));
 	return ;
 }
 
-bool    ConfigLocation::GetBoolGet()
+bool	ConfigLocation::GetBoolGet()
 { return (_get); }
 
-bool    ConfigLocation::GetBoolPost()
+bool	ConfigLocation::GetBoolPost()
 { return (_post); }
 
-bool    ConfigLocation::GetBoolDelete()
+bool	ConfigLocation::GetBoolDelete()
 { return (_delete); }
 
-std::map<std::string, std::string> &ConfigLocation::GetCGIMap()
+std::map<std::string, std::string>	&ConfigLocation::GetCGIMap()
 {return (_cgi); }
