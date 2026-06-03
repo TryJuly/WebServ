@@ -6,31 +6,34 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 14:34:40 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/01 09:13:27 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/03 08:55:18 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
-# include <string>
-# include <sys/socket.h>
-# include <netinet/in.h>
-# include <sys/stat.h>
-// # include <sys/event.h>	// MacOS
-// # include <sys/epoll.h>	// Linux
-# include <iostream>
-# include <unistd.h>
-# include <errno.h>
-# include <vector>
+# include <set>
 # include <poll.h>
+# include <string>
+# include <vector>
+# include <errno.h>
 # include <cstdlib>	// std::atoi
 # include <cstring>	// strncmp
-# include "ConfigServer.hpp"
+# include <unistd.h>
+# include <iostream>
+# include <sys/stat.h>
+# include <sys/socket.h>
+# include <netinet/in.h>
 # include "Client.hpp"
-# include <set>
+# include "ConfigServer.hpp"
 
 # define MAX_EVENTS 10
+# define RED     "\033[31m"      /* Red */
+# define GREEN   "\033[32m"      /* Green */
+# define YELLOW  "\033[33m"      /* Yellow */
+# define BLUE    "\033[34m"      /* Blue */
+# define RESET   "\033[0m"
 
 class Server
 {
@@ -50,14 +53,14 @@ class Server
 		/*	Starting Part	*/
 		void	StopServer();
 		void	StartServer();
-		void	AcceptClient(int index);
+		// void	AcceptClient(int index);
 		bool	IsSocketServer(int fd);
 
 		/*	Set Private Attribute	*/
-		void	SetFdServer(int fd);
+		// void	SetFdServer(int fd);
 		void	SetNumberConfig(int number);
 		void	SetClient(Client const &client);
-		void	SetSockAddr(struct sockaddr_in sockaddr);
+		// void	SetSockAddr(struct sockaddr_in sockaddr);
 		void	SetConfigServer(ConfigServer const &config);
 
 		/*	Get Private Attribute	*/

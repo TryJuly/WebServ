@@ -3,46 +3,44 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cbezenco <cbezenco@student.42lausanne.c    +#+  +:+       +#+        */
+/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 14:38:06 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/01 09:56:16 by cbezenco         ###   ########.fr       */
+/*   Updated: 2026/06/03 10:01:49 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../header/Server.hpp"
-#include <iostream>
 #include <fstream>
+#include <iostream>
+#include "../header/Server.hpp"
 #include "../header/Request.hpp"
 #include "../header/Response.hpp"
 
-// static char	GetIdentifier(std::string &str);
 static int	IsBalance(std::vector<std::string> &fileArray);
 static int	IsValideBloc(std::vector<std::string> &serverBloc);
 static int	FindIndexServerFD(Server &server, int fd);
-// static size_t	Countlocation(std::vector<std::string> &serverChunk);
-// static void	ServerPart(std::vector<std::string> &serverBloc, Server &server);
-// static void	LocationPart(std::vector<std::string> &serverChunk, Server &server);
-// static int	EndChunk(std::vector<std::string> &fileArray, unsigned int index);
-// static int	EndLocationBloc(std::vector<std::string> &serverChunk, unsigned int index);
 
 Server::Server(int ac, char **av)
 {
 	std::string	fileName;
-
 	if (ac == 2)
 		fileName = av[1];
 	else
 		fileName = "default.cnf";
+
 	struct stat	sStat;
 	if (stat(fileName.c_str(), &sStat) == 0 && S_ISDIR(sStat.st_mode))
-		throw (std::invalid_argument("Error: Is a directory."));
+		throw (std::invalid_argument("Error: Is a directory: " + fileName));
+
 	std::ifstream	fd(fileName.c_str(), std::ios::in);
 	if (!fd.is_open())
-		throw (std::invalid_argument("Error: Open file."));
+		throw (std::invalid_argument("Error: Open file: " + fileName));
+
 	std::vector<std::string>	fileArray;
 	std::string	buff;
 	_numberConfig = 0;
+	_numberClient = 0;
+
 	while (!fd.eof()) {
 		std::getline(fd, buff);
 		ClearSpace(buff);
@@ -57,15 +55,6 @@ Server::Server(int ac, char **av)
 	return ;
 }
 
-void	Server::CleanSetError()
-{
-	int size = _configServer.size();
-	for (int i = 0; i < size; i++)
-		_configServer[i].CleanSetError();
-	return ;
-}
-
-/*	Function Set up socket, fdserver bind, listen all server*/
 void	Server::SetUpServer()
 {
 	for (unsigned int i = 0; i < _configServer.size(); i++) {
@@ -91,7 +80,7 @@ void	Server::SetUpServer()
 	return ;
 }
 
-/*	Function verify if the configuration parsing is valid*/
+/*	Function to verify if the configuration parsing is valid*/
 void	Server::CheckConfigServer()
 {}
 
@@ -128,63 +117,33 @@ void parseRequest(char * request) {
 }
 
 /*	Linux version	*/
-void	Server::AcceptClient(int index)
-{
-	int fdServer = FindIndexServerFD(*this, _fds[index].fd);
-	if (fdServer == -1)
-		throw (std::runtime_error("Error: Find FD serveur failed"));
-	struct sockaddr_in	&clientAddr = _configServer[fdServer].GetSockAddr();
-	socklen_t addrLen = sizeof(clientAddr);
-	int socketClient = accept(_fds[index].fd, reinterpret_cast<struct sockaddr *>(&clientAddr), &addrLen);
+// void	Server::AcceptClient(int index)
+// {
+// 	int fdServer = FindIndexServerFD(*this, _fds[index].fd);
+// 	if (fdServer == -1)
+// 		throw (std::runtime_error("Error: Find FD serveur failed"));
+// 	struct sockaddr_in	&clientAddr = _configServer[fdServer].GetSockAddr();
+// 	socklen_t addrLen = sizeof(clientAddr);
+// 	int socketClient = accept(_fds[index].fd, reinterpret_cast<struct sockaddr *>(&clientAddr), &addrLen);
 
-	struct pollfd clientPoll;
-	clientPoll.fd = socketClient;
-	clientPoll.events = POLLIN;
-	clientPoll.revents = 0;
-	_fds.push_back(clientPoll);
-	Client newClient(socketClient);
-	newClient.SetIdClient(_numberClient++);
-	_client.push_back(newClient);
-	return ;
-}
+// 	struct pollfd clientPoll;
+// 	clientPoll.fd = socketClient;
+// 	clientPoll.events = POLLIN;
+// 	clientPoll.revents = 0;
+// 	_fds.push_back(clientPoll);
+// 	Client newClient(socketClient);
+// 	newClient.SetIdClient(_numberClient++);
+// 	_client.push_back(newClient);
+// 	return ;
+// }
 
 void Server::StartServer()
 {
 	int NbRequest = 0;
 	int NbClient = 0;
 	int	IdClient = 0;
-	while (true) {
-		// std::cout << "\n###	Wait Request Client	###\n" << std::endl;
-		// int nfds = epoll_wait(_fdServer, changeList, MAX_EVENTS, -1);	// -1 wait unlimited
-		// for (int i = 0; i < nfds; i++) {
-		// 	for (int j = 0; j < _numberConfig; j++) {
-		// 		if (changeList[i].data.fd == _configServer[j].GetSocket()) {
-		// 			std::cout << "###	INFOS	###\n" << std::endl;
-		// 			std::cout << "Recu " << changeList[i].data.fd << " socket: " << _configServer[0].GetSocket() << " event: " << changeList[i].events << " data ptr: " << changeList[i].data.ptr << std::endl;
-		// 			std::cout << "\n###	FIN INFOS	###\n" << std::endl;
-		// 			socklen_t addrLen = sizeof(_sockAddress);
-		// 			int socketClient = accept(_configServer[0].GetSocket(), reinterpret_cast<struct sockaddr *>(&_sockAddress), &addrLen);
-		// 			NbClient++;
-		// 			struct epoll_event clientEvent;
-		// 			clientEvent.events = EPOLLIN | EPOLLET;
-		// 			clientEvent.data.fd = socketClient;
-		// 			epoll_ctl(_fdServer, EPOLL_CTL_ADD, socketClient, &clientEvent);
-		// 		}
-		// 		else {
-		// 			char buff[1024];
-		// 			if (read(changeList[i].data.fd, buff, sizeof(buff)) == 0) {
-		// 				close(changeList[i].data.fd);
-		// 				NbClient--;
-		// 			}
-		// 			else {
-		// 			std::cout << "###	Client Message:	###\n" << std::endl;
-		// 			Request req(buff);
-		// 			std::cout << "###	End client message	###\n" << std::endl;
 
-		// 			Response rep(req);
-		// 			std::string response = rep.printResponse();
-		// 			write(changeList[i].data.fd, response.c_str(), response.size());
-		// 			std::cout << "###  Server Message: ###\n\n" << response << "\n###  End server message ###\n" << std::endl;
+	while (true) {
 		int nfds = _fds.size();
 		int nb = poll(&_fds[0], nfds , -1);
 		if (nb == -1)
@@ -206,6 +165,7 @@ void Server::StartServer()
 						_fds.push_back(clientPoll);
 						Client newClient(socketClient);
 						newClient.SetIdClient(IdClient++);
+						newClient.SetIndexConfigServer(fdServer);
 						NbClient++;
 						_client.push_back(newClient);
 					}
@@ -228,10 +188,10 @@ void Server::StartServer()
 						}
 					}
 			}
-			NbRequest++;
 			std::cout << "Nb Request is: " << NbRequest << std::endl;
 			std::cout << "Nb Client is: " << NbClient << std::endl;
 		}
+		NbRequest++;
 	}
 }	
 
@@ -241,7 +201,7 @@ static int	FindIndexServerFD(Server &server, int fd)
 	for (int i = 0; i < server.GetNumberConfig(); i++) {
 		ConfigServer &config = server.GetConfigServer(i);
 		if (fd == config.GetSocket())
-			return (config.GetSocket());
+			return (i);
 	}
 	return (-1);
 }
@@ -253,15 +213,21 @@ void	Server::ParseConfig(std::vector<std::string> &fileArray)
 		throw (std::invalid_argument("Error: Missing '}' in config file."));
 	else if (isBlance < 0)
 		throw (std::invalid_argument("Error: Missing '{' in config file."));
+
 	unsigned int i = (fileArray.size() - 1);
 	for (int j = 0; fileArray[i][j] != '}'; i--) {
 		if (fileArray[i][0] != '}' && fileArray[i][0] != '#')
-			throw (std::invalid_argument("Error: Invalid syntaxe config file."));
+			throw (std::invalid_argument("Error: Invalid syntax config file."));
 	}
 
 	size_t	start = 0;
 	size_t	index = 0;
 	while (start < fileArray.size()) {
+		for (; start < fileArray.size(); start++) {
+			if (fileArray[start][0] != '#')
+				break ;
+		}
+
 		ssize_t end = EndChunk(fileArray, start);
 		if (end != -1) {
 			std::vector<std::string> serverChunk;
@@ -269,13 +235,13 @@ void	Server::ParseConfig(std::vector<std::string> &fileArray)
 				serverChunk.push_back(fileArray[i]);
 
 			if (IsValideBloc(serverChunk))
-				throw (std::invalid_argument("Error: Invalid syntaxe."));
+				throw (std::invalid_argument("Error: Invalid syntax."));
 			ConfigServer conf;
 			_configServer.push_back(conf);
 
 			_configServer[index].FillConfigServer(serverChunk);
-			start = end;
 			index++;
+			start = end;
 			_numberConfig++;
 		}
 		else
@@ -284,23 +250,25 @@ void	Server::ParseConfig(std::vector<std::string> &fileArray)
 	return ;
 }
 
-static int IsValideBloc(std::vector<std::string> &serverBloc)
+static int IsValideBloc(std::vector<std::string> &serverChunk)
 {
 	std::string first;
-	for (unsigned int i = 0; i < serverBloc.size(); i++) {
-		if (serverBloc[i][0] == '#')
+	for (unsigned int i = 0; i < serverChunk.size(); i++) {
+		if (serverChunk[i][0] == '#')
 			continue ;
-		for (int j = 0; j < serverBloc[i][j]; j++) {
-			if (serverBloc[i][j] == ' ')
+		for (size_t j = 0; j < serverChunk[i].size(); j++) {
+			if (serverChunk[i][j] == ' ' || serverChunk[i][j] == '\t')
 				continue ;
-			first.push_back(serverBloc[i][j]);
+			first.push_back(serverChunk[i][j]);
 		}
 		break ;
 	}
-	if (first.compare("server{"))
+	if (first[0] != '#' && first.compare("server{"))
 		return (1);
-	for (unsigned int i = 0; i < serverBloc.size(); i++) {
-		if (serverBloc[i][0] != '{' && serverBloc[i][0] != '}' && serverBloc[i].size() < 5)
+	for (unsigned int i = 0; i < serverChunk.size(); i++) {
+		if (serverChunk[i][0] == '#')
+			continue ;
+		if (serverChunk[i][0] != '{' && serverChunk[i][0] != '}' && serverChunk[i].size() < 5)	// Need to check
 			return (1);
 	}
 	return (0);
@@ -321,6 +289,14 @@ static int	IsBalance(std::vector<std::string> &fileArray)
 		}
 	}
 	return (balance);
+}
+
+void	Server::CleanSetError()
+{
+	int size = _configServer.size();
+	for (int i = 0; i < size; i++)
+		_configServer[i].CleanSetError();
+	return ;
 }
 
 bool	Server::IsSocketServer(int fd)
@@ -344,7 +320,13 @@ Server::~Server()
 
 Server &Server::operator=(Server const &copy)
 {
-	(void)copy;
+	if (this != &copy) {
+		_fds = copy._fds;
+		_client = copy._client;
+		_numberClient = copy._numberClient;
+		_numberConfig = copy._numberConfig;
+		_configServer = copy._configServer;
+	}
 	return (*this);
 }
 
@@ -352,12 +334,12 @@ void Server::StopServer()
 {
 }
 
-void	Server::SetFdServer(int fd)
-{
-	(void)fd;
-	// _fdServer = fd;
-	return ;
-}
+// void	Server::SetFdServer(int fd)
+// {
+// 	(void)fd;
+// 	// _fdServer = fd;
+// 	return ;
+// }
 
 void	Server::SetNumberConfig(int number)
 {
@@ -365,12 +347,12 @@ void	Server::SetNumberConfig(int number)
 	return ;
 }
 
-void	Server::SetSockAddr(struct sockaddr_in sockaddr)
-{
-	(void) sockaddr;
-	// _sockAddress = sockaddr;
-	return ;
-}
+// void	Server::SetSockAddr(struct sockaddr_in sockaddr)
+// {
+// 	(void) sockaddr;
+// 	// _sockAddress = sockaddr;
+// 	return ;
+// }
 
 void	Server::SetConfigServer(ConfigServer const &config)
 {

@@ -30,6 +30,7 @@ server {
     }
 
     location /old {
+        methods GET;
         redirect 301 /new;
     }
 
@@ -56,11 +57,12 @@ server {
 
     error_page 404 ./var/www/SERVEUR2/404.html;
 
-	location / {
+	location /blabla {
         autoindex on;
-		methods GET POST;
-        index index.html;
+		methods GET POST DELETE;
+        #index index.html;
         redirect 301 /new;
+        #redirect 301 /new;
         root ./var/www/new;
         cgi .php /usr/bin/php-cgi;
         upload_path ./var/www/uploads;

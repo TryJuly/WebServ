@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
+/*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 13:12:35 by strieste          #+#    #+#             */
-/*   Updated: 2026/05/26 13:50:51 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/02 17:45:38 by seully           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 Client::Client()
 {
 	_fd = -1;
+	_indexConfigServer = -1;
 	return ;
 }
 
@@ -39,6 +40,15 @@ Client&	Client::operator=(Client const &copy)
 		_fd = copy._fd;
 	return (*this);
 }
+
+void	Client::SetIndexConfigServer(int index)
+{
+	_indexConfigServer = index;
+	return ;
+}
+
+int	Client::GetIndexConfigClient()
+{ return (_indexConfigServer); }
 
 int	Client::GetFd()
 { return (_fd); }

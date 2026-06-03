@@ -6,14 +6,20 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 09:35:48 by strieste          #+#    #+#             */
-/*   Updated: 2026/05/28 15:01:24 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/02 11:23:01 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../header/ConfigLocation.hpp"
 
 ConfigLocation::ConfigLocation()
-{ return ; }
+{
+	_get = false;
+	_post = false;
+	_delete = false;
+	_autoindex = false;
+	return ;
+}
 
 ConfigLocation::ConfigLocation(ConfigLocation const &copy)
 {
@@ -32,7 +38,9 @@ ConfigLocation&	ConfigLocation::operator=(ConfigLocation const &copy)
 		_root = copy._root;
 		_index = copy._index;
 		_redir = copy._redir;
-		_methode = copy._methode;
+		_get = copy._get;
+		_post = copy._post;
+		_delete = copy._delete;
 		_autoindex = copy._autoindex;
 		_uploadPath = copy._uploadPath;
 	}
@@ -57,15 +65,11 @@ std::string&	ConfigLocation::GetUpload()
 bool	ConfigLocation::GetAutoIndex()
 { return (_autoindex); }
 
-
-//	Change GET POST DELETE
-std::string&	ConfigLocation::GetMethodes(int index)
-{ return (_methode[index]); }
-
 std::string&	ConfigLocation::GetCGI(std::string key)
 {
-	std::map<std::string, std::string>::iterator it;
-	it = _cgi.find(key);
+	std::map<std::string, std::string>::iterator it = _cgi.find(key);
+	if (it == _cgi.end())
+		throw (std::out_of_range("Error: CGI key not found: " + key));
 	return (it->second);
 }
 
@@ -87,9 +91,24 @@ void	ConfigLocation::Setindex(std::string const &str)
 	return ;
 }
 
+void	ConfigLocation::SetAutoIndex(std::string &value)
+{
+	if (!value.compare("on"))
+		_autoindex = true;
+	else if (value == "off")
+		_autoindex = false;
+	else
+		throw (std::invalid_argument("Error: Value of autoindex is different from on and off."));
+	return ;
+}
+
 void	ConfigLocation::SetRedir(std::string const &str)
 {
-	_redir = str;
+	size_t	endKey = str.find_first_of(" \t");
+	if (endKey == std::string::npos)
+			throw (std::invalid_argument("Error: Invalid syntaxe line: " + str));
+	std::string val = str.substr(endKey + 1, str.size() - endKey);
+	_redir = val;
 	return ;
 }
 
@@ -99,21 +118,78 @@ void	ConfigLocation::SetUpload(std::string const &str)
 	return ;
 }
 
+// void	ConfigLocation::SetBoolGet( void )
+// {
+// 	_get = true;
+// 	return ;
+// }
+
+// void	ConfigLocation::SetBoolPost( void )
+// {
+// 	_post = true;
+// 	return ;
+// }
+// void	ConfigLocation::SetBoolDelete( void )
+// {
+// 	_delete = true;
+// 	return ;
+// }
+
+bool	ConfigLocation::GetBoolGet()
+{
+	if (_get == true)
+		return (true);
+	return (false);
+}
+
+bool	ConfigLocation::GetBoolPost()
+{
+	if (_post == true)
+		return (true);
+	return (false);
+}
+
+bool	ConfigLocation::GetBoolDelete()
+{
+	if (_delete == true)
+		return (true);
+	return (false);
+}
+
 void	ConfigLocation::SetMethodes(std::string const &str)
 {
-	for (int i = 0; str[i]; i++) {
-		if (str[i] == 'G')
-			_methode.push_back("GET");
-		else if (str[i] == 'P')
-			_methode.push_back("POST");
-		else if (str[i] == 'D')
-			_methode.push_back("DELETE");
+	std::string	word;
+	std::stringstream ss(str);
+	std::vector<std::string> v;
+
+	while (std::getline(ss, word, ' '))
+		v.push_back(word);
+
+	for (size_t i = 0; i < v.size(); i++) {
+		ClearSpace(v[i]);
+		if (!v[i].compare("GET"))
+			_get = true;
+		else if (!v[i].compare("POST"))
+			_post = true;
+		else if (!v[i].compare("DELETE"))
+			_delete = true;
+		else
+			throw (std::invalid_argument("Error: Invalide syntax methode: " + str));
 	}
 	return ;
 }
 
-void	ConfigLocation::SetCGI(std::string const &key, std::string const &value)
+void	ConfigLocation::SetCGI(std::string const &value)
 {
-	_cgi.insert(std::pair<std::string, std::string>(key, value));
+	size_t	endKey = value.find_first_of(" \t");
+	if (endKey == std::string::npos)
+			throw (std::invalid_argument("Error: Invalid syntaxe line555: " + value));
+
+	std::string key = value.substr(0, endKey);
+	std::string val = value.substr(endKey + 1, value.size() - endKey);
+	_cgi.insert(std::pair<std::string, std::string>(key, val));
 	return ;
 }
+
+std::map<std::string, std::string> &ConfigLocation::GetCGIMap()
+{return (_cgi); }
