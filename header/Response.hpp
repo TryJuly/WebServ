@@ -1,8 +1,10 @@
 #ifndef RESPONSE_HPP
 # define RESPONSE_HPP
 
-#include <iostream>
 #include "Request.hpp"
+#include "ConfigServer.hpp"
+
+#include <iostream>
 #include <sys/stat.h>
 #include <fstream>
 #include <signal.h>
@@ -18,6 +20,9 @@ class Response {
         std::string _status;
         std::map<std::string, std::string> _headers;
         std::string _body;
+        void    getResponse(Request& req, ConfigServer& config);
+        void    postResponse(Request& req, ConfigServer& config);
+        void    deleteResponse(Request& req, ConfigServer& config);
 
     public:
 
@@ -26,7 +31,7 @@ class Response {
         Response& operator=(const Response& other);
         ~Response();
 
-        Response( Request& req);
+        Response( Request& req, ConfigServer& config);
         std::string getStatus(void) const;
         void setStatus(std::string status);
         std::string printResponse(void);

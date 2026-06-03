@@ -34,7 +34,7 @@ Request::Request(char *buff) {
         _method = first_line.substr(0, 6);
     }
     //path
-    _path = first_line.substr(first_line.find_first_of('/') + 1, first_line.find_last_of(' ') - (first_line.find_first_of('/') + 1));
+    _path = first_line.substr(first_line.find_first_of('/'), first_line.find_last_of(' ') - (first_line.find_first_of('/')));
     //body
     size_t body_pos = req.find_last_of("\r\n\r\n");
     _body = req.substr(body_pos);

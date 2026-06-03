@@ -18,28 +18,39 @@ Response& Response::operator=(const Response& other) {
 
 Response::~Response() {}
 
-Response::Response( Request& req) {
-    // check if Request._path exists
-    std::string path = req.getPath();
+Response::Response( Request& req, ConfigServer& config) {
+    //POST method
     if (req.getMethod() == "POST") {
-        std::cout << "ca va POST ou quoi ?" << std::endl;
-        path = "data/" + path;
-        std::ofstream ofs(path.c_str());
-        _body = req.getBody();
-        ofs << _body;
-        _status = "HTTP/1.1 200 OK\r\n";
+        postResponse(req, config);
         return;
     }
+    //DELETE method
     else if (req.getMethod() == "DELETE") {
-        std::cout << "Jure tu veux DELETE ca ?" << std::endl;
-        //check if path/file is removable or not --> config
-        if (remove(path.c_str())) {
-            std::cout << "could not delete" << std::endl;
-        }
-        _status = "HTTP/1.1 200 OK\r\n";
+        deleteResponse(req, config);
         return;
     }
-    if (path == "") {
+    //GET method
+    else if (req.getMethod() == "GET") {
+        getResponse(req, config);
+        return;
+    }
+    //OTHERS
+    else {}
+}
+
+void Response::getResponse(Request& req, ConfigServer& config) {
+    std::string path = req.getPath();
+    int index_location = config.FindLocationPath(path);
+    if (index_location < 0) {
+        sendError("404");
+        return;
+    }
+    else if (config.GetConfigLocation(index_location).GetBoolGet() != 1) {
+        //Error 405 method not allowed
+        return ;
+    }
+
+    if (path == "/") {
         _status = "HTTP/1.1 200 OK\r\n";
         std::pair<std::string, std::string> type("Content-Type:", "text/html");
         struct stat sb;
@@ -62,6 +73,36 @@ Response::Response( Request& req) {
         _headers.insert(length);
         _body = extract_file(path.c_str());
     }
+}
+
+void Response::postResponse(Request& req, ConfigServer& config) {
+    std::string path = req.getPath();
+    int index_location = config.FindLocationPath(path);
+    if (config.GetConfigLocation(index_location).GetBoolPost() != 1) {
+        //Error 405 method not allowed
+        return ;
+    }
+    std::cout << "ca va POST ou quoi ?" << std::endl;
+    path = "data/" + path;
+    std::ofstream ofs(path.c_str());
+    _body = req.getBody();
+    ofs << _body;
+    _status = "HTTP/1.1 200 OK\r\n";
+}
+
+void Response::deleteResponse(Request& req, ConfigServer& config) {
+    std::string path = req.getPath();
+    int index_location = config.FindLocationPath(path);
+    if (config.GetConfigLocation(index_location).GetBoolDelete() != 1) {
+        //Error 405 method not allowed
+        return ;
+    }
+    std::cout << "Jure tu veux DELETE ca ?" << std::endl;
+    //check if path/file is removable or not --> config
+    if (remove(path.c_str())) {
+        std::cout << "could not delete" << std::endl;
+    }
+    _status = "HTTP/1.1 200 OK\r\n";
 }
 
 std::string Response::getStatus(void) const {

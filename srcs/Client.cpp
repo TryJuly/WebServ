@@ -66,3 +66,12 @@ void	Client::SetIdClient(int id)
 
 int	Client::GetIdClient( void )
 { return (_idClient); }
+
+int Client::GetFdConfigServer( void )
+{ return (_fdConfigServer); }
+
+void Client::SetFdConfigServer( int fd)
+{
+	_fdConfigServer = fd;
+	return ;
+}

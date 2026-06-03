@@ -3,7 +3,7 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigLocation.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
+/*   By: cbezenco <cbezenco@student.42lausanne.c    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 09:35:48 by strieste          #+#    #+#             */
 /*   Updated: 2026/06/02 11:23:01 by strieste         ###   ########.fr       */
@@ -135,27 +135,6 @@ void	ConfigLocation::SetUpload(std::string const &str)
 // 	return ;
 // }
 
-bool	ConfigLocation::GetBoolGet()
-{
-	if (_get == true)
-		return (true);
-	return (false);
-}
-
-bool	ConfigLocation::GetBoolPost()
-{
-	if (_post == true)
-		return (true);
-	return (false);
-}
-
-bool	ConfigLocation::GetBoolDelete()
-{
-	if (_delete == true)
-		return (true);
-	return (false);
-}
-
 void	ConfigLocation::SetMethodes(std::string const &str)
 {
 	std::string	word;
@@ -190,6 +169,15 @@ void	ConfigLocation::SetCGI(std::string const &value)
 	_cgi.insert(std::pair<std::string, std::string>(key, val));
 	return ;
 }
+
+bool    ConfigLocation::GetBoolGet()
+{ return (_get); }
+
+bool    ConfigLocation::GetBoolPost()
+{ return (_post); }
+
+bool    ConfigLocation::GetBoolDelete()
+{ return (_delete); }
 
 std::map<std::string, std::string> &ConfigLocation::GetCGIMap()
 {return (_cgi); }
