@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 14:38:06 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/03 15:30:09 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/09 09:35:38 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -136,27 +136,6 @@ void parseRequest(char * request) {
 	
 }
 
-/*	Linux version	*/
-// void	Server::AcceptClient(int index)
-// {
-// 	int fdServer = FindIndexServerFD(*this, _fds[index].fd);
-// 	if (fdServer == -1)
-// 		throw (std::runtime_error("Error: Find FD serveur failed"));
-// 	struct sockaddr_in	&clientAddr = _configServer[fdServer].GetSockAddr();
-// 	socklen_t addrLen = sizeof(clientAddr);
-// 	int socketClient = accept(_fds[index].fd, reinterpret_cast<struct sockaddr *>(&clientAddr), &addrLen);
-
-// 	struct pollfd clientPoll;
-// 	clientPoll.fd = socketClient;
-// 	clientPoll.events = POLLIN;
-// 	clientPoll.revents = 0;
-// 	_fds.push_back(clientPoll);
-// 	Client newClient(socketClient);
-// 	newClient.SetIdClient(_numberClient++);
-// 	_client.push_back(newClient);
-// 	return ;
-// }
-
 void Server::StartServer()
 {
 	int NbRequest = 0;
@@ -198,21 +177,22 @@ void Server::StartServer()
 								indexConfigServer = i;
 							}
 						}
+						//	Stock read in buffer client client._buffer += std::string(buff, Xoctet)
 						ConfigServer &config = _configServer[indexConfigServer];
-						if (read(_fds[i].fd, buff, sizeof(buff)) == 0) {
+						if (read(_fds[i].fd, buff, sizeof(buff) - 1) == 0) {
 							close(_fds[i].fd);
 							_fds.erase(_fds.begin() + i);	// supprimer la struct
 							NbClient--;
 						}
 						else {
-						std::cout << "###	Client Message:	###\n" << std::endl;
-						Request req(buff);
-						std::cout << "###	End client message	###\n" << std::endl;
-
-						Response rep(req, config);
-						std::string response = rep.printResponse();
-						write(_fds[i].fd, response.c_str(), response.size());
-						std::cout << "###  Server Message: ###\n\n" << response << "\n###  End server message ###\n" << std::endl;
+							std::cout << "###	Client Message:	###\n" << std::endl;
+							Request req(buff);
+							std::cout << "###	End client message	###\n" << std::endl;
+							
+							Response rep(req, config);
+							std::string response = rep.printResponse();
+							write(_fds[i].fd, response.c_str(), response.size());
+							std::cout << "###  Server Message: ###\n\n" << response << "\n###  End server message ###\n" << std::endl;
 						}
 					}
 			}
