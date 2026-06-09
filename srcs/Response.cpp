@@ -40,6 +40,8 @@ Response::Response( Request& req, ConfigServer& config) {
 
 void Response::getResponse(Request& req, ConfigServer& config) {
     std::string path = req.getPath();
+    // std::cout << path << std::endl;
+
     int index_location;
     if (path != "/") {
         int index = path.find_first_of('/', 1);
@@ -47,9 +49,13 @@ void Response::getResponse(Request& req, ConfigServer& config) {
         std::cout << loc_path << std::endl;
         index_location = config.FindLocationPath(loc_path);
     }
-    else
-        index_location = config.FindLocationPath(path);
+    else {
+        std::string l_path = config.GetRoot() + path;
+        index_location = config.FindLocationPath(l_path);
+    }
+
     if (index_location < 0) {
+        std::cout << "haha" << std::endl;
         sendError(404, config);
         return;
     }
@@ -89,13 +95,15 @@ void Response::getResponse(Request& req, ConfigServer& config) {
 
 void Response::postResponse(Request& req, ConfigServer& config) {
     std::string path = req.getPath();
-    int index_location = config.FindLocationPath(path);
+    int index = path.find_first_of('/', 1);
+    std::string loc_path = path.substr(0, index);
+    std::cout << loc_path << std::endl;
+    int index_location = config.FindLocationPath(loc_path);
     if (config.GetConfigLocation(index_location).GetBoolPost() != 1) {
         //Error 405 method not allowed
         return ;
     }
-    std::cout << "ca va POST ou quoi ?" << std::endl;
-    path = "data/" + path;
+    // get upload path form config location
     std::ofstream ofs(path.c_str());
     _body = req.getBody();
     ofs << _body;
@@ -104,12 +112,12 @@ void Response::postResponse(Request& req, ConfigServer& config) {
 
 void Response::deleteResponse(Request& req, ConfigServer& config) {
     std::string path = req.getPath();
+    std::cout << path << std::endl;
     int index_location = config.FindLocationPath(path);
     if (config.GetConfigLocation(index_location).GetBoolDelete() != 1) {
         //Error 405 method not allowed
         return ;
     }
-    std::cout << "Jure tu veux DELETE ca ?" << std::endl;
     //check if path/file is removable or not --> config
     if (remove(path.c_str())) {
         std::cout << "could not delete" << std::endl;
