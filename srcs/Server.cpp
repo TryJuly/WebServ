@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 14:38:06 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/09 14:12:32 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/09 14:25:41 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,7 +50,7 @@ Server::Server(int ac, char **av)
 	fd.close();
 	ParseConfig(fileArray);
 	CleanSetError();
-	//CheckConfigServer();
+	CheckConfigServer();
 	SetUpServer();
 	return ;
 }

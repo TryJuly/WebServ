@@ -6,13 +6,14 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 08:36:43 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/09 14:21:22 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/09 14:25:23 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../header/ConfigServer.hpp"
 
 static char	GetIdentifier(std::string &str);
+static char	GetIdentifierLocation(std::string &token);
 static void	CheckConfigRequired(std::set<char> &checkDoube);
 static int	SkipLocation(std::vector<std::string> &serverBloc, int index);
 static ssize_t	StartLocation(std::vector<std::string> &serverChunk, size_t index);
@@ -261,7 +262,7 @@ std::map<int, std::string>	&ConfigServer::GetMapError()
 { return (_errorPages); }
 
 
-std::string	&ConfigServer::GetErrorPages(int number)
+std::string	ConfigServer::GetErrorPages(int number)
 {
 	std::map<int, std::string>::iterator it;
 	it = _errorPages.find(number);
