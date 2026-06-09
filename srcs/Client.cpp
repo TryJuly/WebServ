@@ -36,8 +36,13 @@ Client::~Client()
 
 Client&	Client::operator=(Client const &copy)
 {
-	if (this != &copy)
+	if (this != &copy) {
 		_fd = copy._fd;
+		_idClient = copy._idClient;
+		_fdConfigServer = copy._fdConfigServer;
+		_indexConfigServer = copy._fdConfigServer;
+		_buffer = copy._buffer;
+	}
 	return (*this);
 }
 
