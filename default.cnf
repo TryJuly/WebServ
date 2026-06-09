@@ -10,6 +10,5 @@ server {
     location / {
         methods GET;
         autoindex off;
-        root ./differente_root;
     }
 }
