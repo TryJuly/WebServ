@@ -50,7 +50,7 @@ Server::Server(int ac, char **av)
 	fd.close();
 	ParseConfig(fileArray);
 	CleanSetError();
-	CheckConfigServer();
+	//CheckConfigServer();
 	SetUpServer();
 	return ;
 }
