@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/02 15:35:11 by seully            #+#    #+#             */
-/*   Updated: 2026/06/09 09:24:55 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/09 14:10:10 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@ static std::string	UrlDecode(std::string const &url);
 CGI::CGI()
 { return ; }
 
-CGI::CGI(std::string const &request, ConfigLocation &location, ConfigServer &server)
+CGI::CGI(std::string const &request)
 {
 	bool isQuery = true;
 	size_t	pos = 0;
@@ -97,7 +97,7 @@ CGI::CGI(std::string const &request, ConfigLocation &location, ConfigServer &ser
 		}
 		else if (_stock.find("Content-Length") != _stock.end()) {
 			search = _stock.find("Content-Length");
-			int contentLength = std::strtol(search->second.c_str(), NULL, 10);
+			size_t contentLength = std::strtol(search->second.c_str(), NULL, 10);
 			size_t	bodyStart = request.find("\r\n\r\n");
 			if (bodyStart == std::string::npos) {
 				bodyStart = request.find("\n\n");
@@ -107,7 +107,7 @@ CGI::CGI(std::string const &request, ConfigLocation &location, ConfigServer &ser
 				bodyStart += 4;
 			std::string body = request.substr(bodyStart, contentLength);
 			if (body.size() != contentLength) {
-				// return 400 
+				// return 400
 				return ;
 			}
 			_stock.insert((std::make_pair("Body", body)));
@@ -122,7 +122,7 @@ CGI::CGI(std::string const &request, ConfigLocation &location, ConfigServer &ser
 	return ;
 }
 
-std::string	CGI::Execute(ConfigLocation &config)
+std::string	CGI::Execute(ConfigLocation const &config)
 {
 	char **envp = new char*[_stock.size() + 1];
 	std::string	response;

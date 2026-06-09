@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 14:34:40 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/03 08:55:18 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/09 14:13:08 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,7 @@
 # include <netinet/in.h>
 # include "Client.hpp"
 # include "ConfigServer.hpp"
+# include "CGI.hpp"
 
 # define MAX_EVENTS 10
 # define RED     "\033[31m"      /* Red */
@@ -55,6 +56,7 @@ class Server
 		void	StartServer();
 		// void	AcceptClient(int index);
 		bool	IsSocketServer(int fd);
+		void	AcceptClient(int fd, int idClient);
 
 		/*	Set Private Attribute	*/
 		// void	SetFdServer(int fd);

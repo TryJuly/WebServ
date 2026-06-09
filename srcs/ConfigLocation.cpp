@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 09:35:48 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/03 14:46:55 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/09 13:38:22 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,31 +47,48 @@ ConfigLocation&	ConfigLocation::operator=(ConfigLocation const &copy)
 	return (*this);
 }
 
-std::string&	ConfigLocation::GetPath()
+/*	GETTER	*/
+
+std::string	ConfigLocation::GetPath() const
 { return (_path); }
 
-std::string&	ConfigLocation::GetRoot()
+std::string	ConfigLocation::GetRoot() const
 { return (_root); }
 
-std::string&	ConfigLocation::Getindex()
+std::string	ConfigLocation::Getindex() const
 { return (_index); }
 
-std::string&	ConfigLocation::GetRedir()
+std::string	ConfigLocation::GetRedir() const
 { return (_redir); }
 
-std::string&	ConfigLocation::GetUpload()
+std::string	ConfigLocation::GetUpload() const
 { return (_uploadPath); }
 
 bool	ConfigLocation::GetAutoIndex()
 { return (_autoindex); }
 
-std::string&	ConfigLocation::GetCGI(std::string key)
+std::string	ConfigLocation::GetCGI(std::string key) const
 {
-	std::map<std::string, std::string>::iterator it = _cgi.find(key);
-	if (it == _cgi.end())
+	std::map<std::string, std::string> copy = _cgi;
+	std::map<std::string, std::string>::iterator it = copy.find(key);
+	if (it == copy.end())
 		throw (std::out_of_range("Error: CGI key not found: " + key));
 	return (it->second);
 }
+
+bool	ConfigLocation::GetBoolGet() const
+{ return (_get); }
+
+bool	ConfigLocation::GetBoolPost() const
+{ return (_post); }
+
+bool	ConfigLocation::GetBoolDelete() const
+{ return (_delete); }
+
+std::map<std::string, std::string>	&ConfigLocation::GetCGIMap()
+{return (_cgi); }
+
+/*	SETTER*/
 
 void	ConfigLocation::SetPath(std::string const &str)
 {
@@ -108,8 +125,6 @@ void	ConfigLocation::SetRedir(std::string const &str)
 	if (endKey == std::string::npos)
 			throw (std::invalid_argument("Error: Invalid syntax line: " + str));
 	std::string val = str.substr(endKey + 1, str.size() - endKey);
-	
-
 	//		ADD
 	struct stat st;
 	if (stat(val.c_str(), &st) != 0)
@@ -142,7 +157,7 @@ void	ConfigLocation::SetMethodes(std::string const &str)
 		else if (!v[i].compare("DELETE"))
 			_delete = true;
 		else
-			throw (std::invalid_argument("Error: Invalide syntax methode: " + str));
+			throw (std::invalid_argument("Error: Invalid syntax methode: " + str));
 	}
 	return ;
 }
@@ -155,8 +170,6 @@ void	ConfigLocation::SetCGI(std::string const &value)
 
 	std::string key = value.substr(0, endKey);
 	std::string val = value.substr(endKey + 1, value.size() - endKey);
-
-
 	// ADD
 	if (key.compare(".py") && key.compare(".php"))
 		throw (std::invalid_argument("Error: Cgi not handle: " + key));
@@ -166,15 +179,3 @@ void	ConfigLocation::SetCGI(std::string const &value)
 	_cgi.insert(std::pair<std::string, std::string>(key, val));
 	return ;
 }
-
-bool	ConfigLocation::GetBoolGet()
-{ return (_get); }
-
-bool	ConfigLocation::GetBoolPost()
-{ return (_post); }
-
-bool	ConfigLocation::GetBoolDelete()
-{ return (_delete); }
-
-std::map<std::string, std::string>	&ConfigLocation::GetCGIMap()
-{return (_cgi); }

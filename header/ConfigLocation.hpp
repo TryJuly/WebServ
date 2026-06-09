@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/25 13:20:16 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/03 14:39:38 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/09 13:33:42 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,17 +29,17 @@ class ConfigLocation
 		~ConfigLocation();
 		ConfigLocation&	operator=(ConfigLocation const &copy);
 
-		std::string&	GetPath();
-		std::string&	GetRoot();
-		std::string&	Getindex();
-		std::string&	GetRedir();
-		std::string&	GetUpload();
+		std::string	GetPath() const;
+		std::string	GetRoot() const;
+		std::string	Getindex() const;
+		std::string	GetRedir() const;
+		std::string	GetUpload() const;
 		bool			GetAutoIndex();
 		// std::string&	GetMethodes(int index);
-		std::string&	GetCGI(std::string key);
-		bool			GetBoolGet();
-		bool			GetBoolPost();
-		bool			GetBoolDelete();
+		std::string	GetCGI(std::string key) const;
+		bool			GetBoolGet() const;
+		bool			GetBoolPost() const;
+		bool			GetBoolDelete() const;
 		
 		std::map<std::string, std::string> &GetCGIMap();
 

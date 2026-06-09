@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/25 12:51:30 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/03 09:16:51 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/09 14:19:27 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,6 +46,7 @@ class ConfigServer
 		std::string&	GetIndex();
 		std::string&	GetServerName();
 		std::string		GetErrorPages(int number);
+		std::map<int, std::string>&	GetMapError();
 		ConfigLocation&	GetConfigLocation(int index);
 		sockaddr_in&	GetSockAddr(void);
 		int	GetNumberLocation(void);
@@ -53,7 +54,7 @@ class ConfigServer
 		void	FillConfigServer(std::vector<std::string> &serverChunk);
 		void	SetConfigServer(std::string &str, char iD);
 		void	CleanSetError();
-		int		FindLocationPath(std::string &path);
+		int		FindLocationPath(std::string const &path);
 		void	AddConfigLocation(ConfigLocation &config);
 
 		void	SetPort(int port);

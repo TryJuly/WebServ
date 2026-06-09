@@ -12,6 +12,7 @@ class Request {
         std::string _path;
         std::map<std::string, std::string> _headers;
         std::string _body;
+        bool	_isCGI;
 
     public:
 
@@ -25,6 +26,7 @@ class Request {
         std::string getPath(void) const ;
         std::map<std::string, std::string> getHeaders(void) const;
         std::string getBody(void) const;
+		bool	IsCGI( void );
 
 };
 
