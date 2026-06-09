@@ -205,9 +205,9 @@ void Server::StartServer()
 					else {
 						char buff[1024];
 						int indexConfigServer = 0;
-						for (unsigned int i = 0; i < _client.size(); i++) {
-							if (_fds[i].fd == _client[i].GetFdConfigServer()) {
-								indexConfigServer = i;
+						for (unsigned int j = 0; j < _client.size(); j++) {
+							if (_fds[i].fd == _client[j].GetFd()) {
+								indexConfigServer = _client[j].GetIndexConfigClient();
 							}
 						}
 						//	Stock read in buffer client client._buffer += std::string(buff, Xoctet)
