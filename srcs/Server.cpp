@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 14:38:06 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/09 09:35:38 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/09 14:12:32 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,17 +89,24 @@ void	Server::CheckConfigServer()
 		if (configServer.GetPort() < 0 || configServer.GetPort() > 65535)
 			throw (std::invalid_argument("Error: Invalid port."));
 
-		 for (int j = 0; j < configServer.GetNumberLocation(); j++) {
+		for (int j = 0; j < configServer.GetNumberLocation(); j++) {
 			ConfigLocation &location = configServer.GetConfigLocation(j);
-			if (stat(location.GetPath().c_str(), &sstat) != 0)
-				throw (std::invalid_argument("Error: Invalid path location: " + location.GetPath()));
+			std::string path = location.GetRoot() + location.GetPath();
+			if (stat(path.c_str(), &sstat) != 0)
+				throw (std::invalid_argument("Error: Invalid path location: " + path));
 			if (stat(location.GetRoot().c_str(), &sstat) != 0)
 				throw (std::invalid_argument("Error: Invalid path location: " + location.GetRoot()));
 			if (!location.GetUpload().empty() && stat(location.GetUpload().c_str(), &sstat) != 0)
 				throw (std::invalid_argument("Error: Invalid path location: " + location.GetUpload()));
 			if (!location.GetRedir().empty() && stat(location.GetRedir().c_str(), &sstat) != 0)
 				throw (std::invalid_argument("Error: Invalid path location: " + location.GetRedir()));
-		 }
+		}
+		std::map<int, std::string>	pMap = configServer.GetMapError();
+		for (std::map<int, std::string>::iterator it = pMap.begin(); it != pMap.end(); it++) {
+			std::string errorPath = it->second;
+			if (stat(errorPath.c_str(), &sstat) != 0)
+				throw (std::invalid_argument("Error: Invalid path location: " + errorPath));
+		}
 	}
 	return ;
 }
@@ -136,6 +143,30 @@ void parseRequest(char * request) {
 	
 }
 
+void	Server::AcceptClient(int fd, int idClient)
+{
+	int fdServer = FindIndexServerFD(*this, fd);
+	if (fdServer == -1)
+		throw (std::runtime_error("Error: Find FD serveur failed"));
+	struct sockaddr_in	&clientAddr = _configServer[fdServer].GetSockAddr();
+	socklen_t addrLen = sizeof(clientAddr);
+	int socketClient = accept(fd, reinterpret_cast<struct sockaddr *>(&clientAddr), &addrLen);
+
+	struct pollfd clientPoll;
+	clientPoll.fd = socketClient;
+	clientPoll.events = POLLIN;
+	clientPoll.revents = 0;
+	_fds.push_back(clientPoll);
+
+	Client newClient(socketClient);
+	newClient.SetIdClient(idClient);
+	newClient.SetFdConfigServer(fdServer);
+	newClient.SetIndexConfigServer(fdServer);
+	// NbClient++;
+	_client.push_back(newClient);
+	return ;
+}
+
 void Server::StartServer()
 {
 	int NbRequest = 0;
@@ -146,10 +177,12 @@ void Server::StartServer()
 		int nfds = _fds.size();
 		int nb = poll(&_fds[0], nfds , -1);
 		if (nb == -1)
-			throw (std::invalid_argument("Error: Poll."));
+			throw (std::runtime_error("Error: Poll."));
 		for (unsigned int i = 0; i < _fds.size(); i++) {
 				if (_fds[i].revents & POLLIN) {
 					if (IsSocketServer(_fds[i].fd)) {
+						// AcceptClient(_fds[i].fd, IdClient);
+						// IdClient++;
 						int fdServer = FindIndexServerFD(*this, _fds[i].fd);
 						if (fdServer == -1)
 							throw (std::runtime_error("Error: Find FD serveur failed"));
@@ -188,11 +221,33 @@ void Server::StartServer()
 							std::cout << "###	Client Message:	###\n" << std::endl;
 							Request req(buff);
 							std::cout << "###	End client message	###\n" << std::endl;
-							
-							Response rep(req, config);
-							std::string response = rep.printResponse();
-							write(_fds[i].fd, response.c_str(), response.size());
-							std::cout << "###  Server Message: ###\n\n" << response << "\n###  End server message ###\n" << std::endl;
+
+							if (req.IsCGI() == true) {
+								try {
+									CGI	process(buff);
+									std::string path = req.getPath();
+									size_t	start = path.find('/');
+									size_t	end = path.find('/', start + 1);
+									int indexLocation = 0;
+									if (end == std::string::npos)
+										indexLocation = config.FindLocationPath("/");
+									else {
+										std::string locationPath = path.substr(start, end - start - 1);
+										indexLocation = config.FindLocationPath(locationPath);
+									}
+									std::string response = process.Execute(config.GetConfigLocation(indexLocation));
+								}
+								catch(const std::exception& e) {
+									// error file send to client
+									std::cerr << e.what() << '\n';
+								}
+							}
+							else {
+								Response rep(req, config);
+								std::string response = rep.printResponse();
+								write(_fds[i].fd, response.c_str(), response.size());
+								std::cout << "###  Server Message: ###\n\n" << response << "\n###  End server message ###\n" << std::endl;
+							}
 						}
 					}
 			}
@@ -342,25 +397,12 @@ void Server::StopServer()
 {
 }
 
-// void	Server::SetFdServer(int fd)
-// {
-// 	(void)fd;
-// 	// _fdServer = fd;
-// 	return ;
-// }
 
 void	Server::SetNumberConfig(int number)
 {
 	_numberConfig = number;
 	return ;
 }
-
-// void	Server::SetSockAddr(struct sockaddr_in sockaddr)
-// {
-// 	(void) sockaddr;
-// 	// _sockAddress = sockaddr;
-// 	return ;
-// }
 
 void	Server::SetConfigServer(ConfigServer const &config)
 {
@@ -374,10 +416,7 @@ void	Server::SetClient(Client const &client)
 	return ;
 }
 
-// int	Server::GetFdServer( int index )
-// {
-// 	return (_fdServer[index]);
-// }
+/*	GETTER	*/
 
 int	Server::GetNumberConfig( void )
 { return (_numberConfig); }
