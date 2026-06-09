@@ -40,27 +40,15 @@ Response::Response( Request& req, ConfigServer& config) {
 
 void Response::getResponse(Request& req, ConfigServer& config) {
     std::string path = req.getPath();
-    // std::cout << path << std::endl;
 
-    int index_location;
-    if (path != "/") {
-        int index = path.find_first_of('/', 1);
-        std::string loc_path = path.substr(0, index);
-        std::cout << loc_path << std::endl;
-        index_location = config.FindLocationPath(loc_path);
-    }
-    else {
-        std::string l_path = config.GetRoot() + path;
-        index_location = config.FindLocationPath(l_path);
-    }
+    int index_location = loc_index(path, config);
 
     if (index_location < 0) {
-        std::cout << "haha" << std::endl;
         sendError(404, config);
         return;
     }
     else if (config.GetConfigLocation(index_location).GetBoolGet() != 1) {
-        //Error 405 method not allowed
+        sendError(405, config);
         return ;
     }
 
@@ -68,7 +56,7 @@ void Response::getResponse(Request& req, ConfigServer& config) {
         std::string f_path = config.GetRoot() + "/" + config.GetIndex();
         std::cout << f_path << std::endl;
         _status = "HTTP/1.1 200 OK\r\n";
-        std::pair<std::string, std::string> type("Content-Type:", "text/html");
+        std::pair<std::string, std::string> type("Content-Type:", "*/*");
         struct stat sb;
         stat(f_path.c_str(), &sb);
         std::pair<std::string, std::string> length("Content-Length:", return_file_length(sb.st_size));
@@ -77,15 +65,16 @@ void Response::getResponse(Request& req, ConfigServer& config) {
         _body = extract_file(f_path);
     }
     else {
-        std::string f_path = config.GetRoot() + path;
-        std::cout << f_path << std::endl;
+        ConfigLocation loc = config.GetConfigLocation(index_location);
+        std::string root = loc.GetRoot();
+        std::string f_path = root + path;
         struct stat sb;
-        if (stat(f_path.c_str(), &sb) != 0) {
+        if (stat(f_path.c_str(), &sb) != 0 || S_ISDIR(sb.st_mode)) {
             sendError(404, config);
             return;
         }
         _status = "HTTP/1.1 200 OK\r\n";
-        std::pair<std::string, std::string> type("Content-Type:", "text/html");
+        std::pair<std::string, std::string> type("Content-Type:", "*/*");
         std::pair<std::string, std::string> length("Content-Length:", return_file_length(sb.st_size));
         _headers.insert(type);
         _headers.insert(length);
@@ -95,12 +84,15 @@ void Response::getResponse(Request& req, ConfigServer& config) {
 
 void Response::postResponse(Request& req, ConfigServer& config) {
     std::string path = req.getPath();
-    int index = path.find_first_of('/', 1);
-    std::string loc_path = path.substr(0, index);
-    std::cout << loc_path << std::endl;
-    int index_location = config.FindLocationPath(loc_path);
-    if (config.GetConfigLocation(index_location).GetBoolPost() != 1) {
-        //Error 405 method not allowed
+    std::cout << path << std::endl;
+    int index_location = loc_index(path, config);
+
+    if (index_location < 0) {
+        sendError(404, config);
+        return;
+    }
+    else if (config.GetConfigLocation(index_location).GetBoolPost() != 1) {
+        sendError(405, config);
         return ;
     }
     // get upload path form config location
@@ -151,10 +143,14 @@ void Response::sendError(int status, ConfigServer& config) {
         
         case 404:
             err_file = config.GetErrorPages(status);
-            std::cout << err_file << std::endl;
             _status = "HTTP/1.1 404 Not Found\r\n";
             break ;
         
+        case 405:
+            err_file = config.GetErrorPages(status);
+            _status = "HTTP/1.1 405 Method Not Allowed\r\n";
+            break;
+
         default:
             std::cout << "Error" << std::endl;
             break;
@@ -187,4 +183,27 @@ std::string return_file_length(size_t length) {
     std::ostringstream len;
     len << length;
     return (len.str());
+}
+
+int loc_index(std::string path, ConfigServer& config) {
+    int index_location = -1;
+    if (path != "/") {
+        int index = path.find_first_of('/', 1);
+        if (index == -1) {
+            std::string file = path.erase(0, 1);
+            std::cout << file << std::endl;
+            std::string loc = "/";
+            index_location = config.FindLocationPath(loc);
+            return (index_location);
+        }
+        else {
+            std::string loc_path = path.substr(0, index);
+            std::cout << loc_path << std::endl;
+            index_location = config.FindLocationPath(loc_path);
+        }
+    }
+    else {
+        index_location = config.FindLocationPath(path);
+    }
+    return (index_location);
 }

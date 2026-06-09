@@ -40,5 +40,6 @@ class Response {
 
 std::string extract_file(std::string filename);
 std::string return_file_length(size_t length);
+int         loc_index(std::string path, ConfigServer& config);
 
 #endif

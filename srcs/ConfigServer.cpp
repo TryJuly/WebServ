@@ -251,7 +251,7 @@ static void	FillConfigLocation(ConfigLocation &config, std::vector<std::string> 
 			break;
 		}
 	}
-	config.SetPath(config.GetRoot() + path);
+	config.SetPath(path);
 	return ;
 }
 
