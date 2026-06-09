@@ -3,16 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
+/*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 13:10:16 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/03 11:23:15 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/08 14:08:56 by seully           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef CLIENT_HPP
 # define CLIENT_HPP
 
+#include <string>
 class Client
 {
 	public:
@@ -39,6 +40,7 @@ class Client
 		int	_idClient;
 		int _fdConfigServer;
 		int	_indexConfigServer;
+		std::string	_buffer;
 };
 
 #endif
