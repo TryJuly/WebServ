@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/25 13:20:16 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/09 13:33:42 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/10 09:26:10 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,12 @@
 # include <iostream>
 # include <exception>
 # include <sys/stat.h>
+
+# define RED     "\033[31m"      /* Red */
+# define GREEN   "\033[32m"      /* Green */
+# define YELLOW  "\033[33m"      /* Yellow */
+# define BLUE    "\033[34m"      /* Blue */
+# define RESET   "\033[0m"
 
 class ConfigLocation
 {

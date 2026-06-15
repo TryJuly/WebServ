@@ -179,11 +179,11 @@ std::string extract_file(std::string filename) {
     return (body);
 }
 
-std::string return_file_length(size_t length) {
-    std::ostringstream len;
-    len << length;
-    return (len.str());
-}
+// std::string return_file_length(size_t length) {
+//     std::ostringstream len;
+//     len << length;
+//     return (len.str());
+// }
 
 int loc_index(std::string path, ConfigServer& config) {
     int index_location = -1;

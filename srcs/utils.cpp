@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/27 17:50:30 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/01 14:33:31 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/10 13:55:01 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,4 +53,10 @@ int	EndChunk(std::vector<std::string> &fileArray, unsigned int index)
 		}
 	}
 	return (-1);
+}
+
+std::string return_file_length(size_t length) {
+    std::ostringstream len;
+    len << length;
+    return (len.str());
 }
