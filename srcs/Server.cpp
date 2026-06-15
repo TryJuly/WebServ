@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 14:38:06 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/15 14:50:00 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/15 15:25:47 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -181,10 +181,8 @@ void	Server::AcceptClient(int fd, int idClient)
 bool	Server::IsCgiEvent(int fd)
 {
 	for (size_t	i = 0; i < _client.size(); i++) {
-		if (_client[i].GetIsCgi() == true && fd == _client[i].GetPipeFd()) {
-			std::cout << RED << "Iscgi true" << RESET << std::endl;
+		if (_client[i].GetIsCgi() == true && fd == _client[i].GetPipeFd())
 			return (true);
-		}
 	}
 	return (false);
 }
@@ -211,36 +209,6 @@ void	Server::SendCgiResponse(int i)
 	if (bytes > 0) {
 		buff[bytes] = '\0';
 		_client[indexClient].AppendCgiResponse(buff);
-		// bytes = read(_client[indexClient].GetPipeFd(), buff, sizeof(buff) - 1);
-		// if (bytes == 0) {
-		// 	exit(1);
-		// 	std::string response = _client[indexClient].GetCgiResponse();
-		// 	size_t	sep = response.find("\r\n\r\n");
-		// 	if (sep == std::string::npos)
-		// 		sep = response.find("\r\n");
-		// 	if (sep == std::string::npos) {
-		// 		std::string length = return_file_length(response.size());
-		// 		response = "Content-Length: " + length + "\r\n\r\n" + response;
-		// 	}
-		// 	else {
-		// 		std::string body = response.substr(response.find("\r\n\r\n") + 4);
-		// 		// std::string body = response.substr(sep + (response[sep + 1] == '\n' ? 2 : 4));	// check
-		// 		std::string length = return_file_length(body.size());
-		// 		response = "Content-Length: " + length + "\r\n" + response;
-		// 	}
-		// 	if (response.substr(0, 5) != "HTTP/") {
-		// 		std::string status = "HTTP/1.1 200 OK\r\n";
-		// 		response = status + response;
-		// 	}
-		// 	write(_client[indexClient].GetFd(), response.c_str(), response.size());
-		// 	close(_fds[i].fd);
-		// 	_fds.erase(_fds.begin() + i);
-		// 	_client[indexClient].SetIsCgi(false);
-		// 	_client[indexClient].CleanCgiResponse();
-		// 	_client[indexClient].ResetRequest();
-		// 	_client[indexClient].SetTime(std::time(NULL));
-		// 	exit(1);
-		// }
 	}
 	else if (bytes == 0) {
 		std::string response = _client[indexClient].GetCgiResponse();
@@ -252,8 +220,8 @@ void	Server::SendCgiResponse(int i)
 			response = "Content-Length: " + length + "\r\n\r\n" + response;
 		}
 		else {
-			// std::string body = response.substr(response.find("\r\n\r\n") + 4);
-			std::string body = response.substr(sep + (response[sep + 1] == '\n' ? 2 : 4));	// check
+			std::string body = response.substr(response.find("\r\n\r\n") + 4);
+			// std::string body = response.substr(sep + (response[sep + 1] == '\n' ? 2 : 4));	// check
 			std::string length = return_file_length(body.size());
 			response = "Content-Length: " + length + "\r\n" + response;
 		}
@@ -271,9 +239,9 @@ void	Server::SendCgiResponse(int i)
 	}
 }
 
-void	Server::HandleCgiRequest(ConfigServer &config, Request const &req, char *buff, int indexClient)
+void	Server::HandleCgiRequest(ConfigServer &config, Request const &req, int indexClient)
 {
-	CGI	process(buff);
+	CGI	process(_client[indexClient].GetRequest());
 	std::string path = req.getPath();
 	size_t	start = path.find('/');
 	size_t	end = path.find('/', start + 1);
@@ -329,7 +297,7 @@ void	Server::CatchClientRequest(int i, int &NbClient)
 			Request req(_client[indexClient].GetRequest());
 			std::cout << "###	End client message	###\n" << std::endl;
 			if (req.IsCGI() == true)
-				HandleCgiRequest(config, req, buff, indexClient);
+				HandleCgiRequest(config, req, indexClient);
 			else {
 				Response rep(req, config);
 				std::string response = rep.printResponse();
@@ -360,7 +328,6 @@ void Server::StartServer()
 		if (nb == -1)
 			throw (std::runtime_error("Error: Poll."));
 		for (unsigned int i = 0; i < _fds.size(); i++) {
-			// std::cout << "SIze: " << _fds.size() << std::endl;
 			if (_fds[i].revents != 0) {
 				if (IsSocketServer(_fds[i].fd)) {
 					AcceptClient(_fds[i].fd, IdClient);
@@ -372,8 +339,8 @@ void Server::StartServer()
 				else
 					CatchClientRequest(i, NbClient);
 			}
-			CheckTimeoutClient();
-			std::cout << "Nb Client is: " << NbClient << std::endl;
+			// CheckTimeoutClient();
+			// std::cout << "Nb Client is: " << NbClient << std::endl;
 		}
 		// NbRequest++;
 	}
@@ -418,98 +385,6 @@ void	Server::CheckTimeoutClient( void )
 	}
 	return ;
 }
-
-// void Server::StartServer()
-// {
-// 	int NbClient = 0;
-// 	int	IdClient = 0;
-
-// 	while (true) {
-// 		int nfds = _fds.size();
-// 		int nb = poll(&_fds[0], nfds , -1);
-// 		if (nb == -1)
-// 			throw (std::runtime_error("Error: Poll."));
-// 		for (unsigned int i = 0; i < _fds.size(); i++) {
-// 			if (_fds[i].revents & POLLIN) {
-// 				if (IsSocketServer(_fds[i].fd)) {
-// 					AcceptClient(_fds[i].fd, IdClient);
-// 					_client[_client.size()].SetIndexFdsStruct(i);
-// 					IdClient++;
-// 					NbClient++;
-// 				}
-// 				else {
-// 					int indexClient = GetIndexClient(_fds[i].fd);
-// 					if (indexClient == -1)
-// 						continue ;
-// 					try {
-// 						char buff[1024];
-// 						ConfigServer &config = _configServer[_client[indexClient].GetIndexConfigServer()];
-// 						int bytes = read(_client[indexClient].GetFd(), buff, sizeof(buff) - 1);
-// 						if (bytes == 0) {
-// 							close(_client[indexClient].GetFd());
-// 							_fds.erase(_fds.begin() + i);
-// 							NbClient--;
-// 						}
-// 						else {
-// 							buff[bytes] = '\0';
-// 							_client[indexClient].FillRequestClient(buff);
-// 							if (_client[indexClient].ClientRequestIsReady() == false)
-// 								continue ;
-// 							std::cout << "###	Client Message:	###\n" << std::endl;
-// 							Request req(_client[indexClient].GetRequest());
-// 							std::cout << "###	End client message	###\n" << std::endl;
-// 							if (req.IsCGI() == true) {
-// 								CGI	process(buff);
-// 								std::string path = req.getPath();
-// 								size_t	start = path.find('/');
-// 								size_t	end = path.find('/', start + 1);
-// 								int indexLocation = 0;
-// 								if (end == std::string::npos)
-// 									indexLocation = config.FindLocationPath("/");
-// 								else {
-// 									std::string locationPath = path.substr(start, end - start);	//
-// 									indexLocation = config.FindLocationPath(locationPath);
-// 									if (indexLocation == -1)
-// 										throw (std::runtime_error("404 Error:"));
-// 								}
-// 								if (IsValideMethodeForLocation(req.getMethod(), config.GetConfigLocation(indexLocation)) == true) {
-// 									std::string response = process.Execute(config.GetConfigLocation(indexLocation));
-// 									write(_fds[i].fd, response.c_str(), response.size());
-// 								}
-// 								else
-// 									throw (std::runtime_error("405 Error:"));
-// 							}
-// 							else {
-// 								Response rep(req, config);
-// 								std::string response = rep.printResponse();
-// 								write(_fds[i].fd, response.c_str(), response.size());
-// 								std::cout << "###  Server Message: ###\n\n" << response << "\n###  End server message ###\n" << std::endl;
-// 							}
-// 							_client[indexClient].ResetRequest();
-// 						}
-// 					}
-// 					catch (const std::exception& e) {
-// 						std::string handleError = e.what();
-// 						std::string stringError = handleError.substr(0, 3);
-// 						int error = std::strtol(stringError.c_str(), NULL, 10);
-// 						ConfigServer &config = _configServer[_client[indexClient].GetIndexConfigServer()];
-// 						std::string response = SendErrorPage(config, error);
-// 						write(_fds[i].fd, response.c_str(), response.size());
-// 					}
-// 				}
-// 			}
-// 			for (size_t k = 0; k < _client.size(); k++) {
-// 				if (std::time(NULL) - _client[k].GetTime() > 60) {
-// 					_client[k].CloseFd();
-// 					_fds.erase( _fds.begin() + _client[k].GetIndexFdsStruct());
-// 				}
-// 			}
-// 			// std::cout << "Nb Request is: " << NbRequest << std::endl;
-// 			std::cout << "Nb Client is: " << NbClient << std::endl;
-// 		}
-// 		// NbRequest++;
-// 	}
-// }
 
 static std::string	SendErrorPage(ConfigServer &serverConfig, int errorNumber)
 {
@@ -576,7 +451,6 @@ static std::string	SendErrorPage(ConfigServer &serverConfig, int errorNumber)
 	default:
 		break;
 	}
-	// write(fdClient, response.c_str(), response.length());
 	return(response) ;
 }
 
