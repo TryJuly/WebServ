@@ -1,4 +1,4 @@
-#include "Request.hpp"
+# include "../header/Request.hpp"
 
 Request::Request() {
 	_isCGI = false;
@@ -22,7 +22,7 @@ Request& Request::operator=(const Request& other) {
 
 Request::~Request() {}
 
-Request::Request(char *buff) {
+Request::Request(std::string buff) {
 	_isCGI = false;
 
     std::string req = static_cast<std::string>(buff);

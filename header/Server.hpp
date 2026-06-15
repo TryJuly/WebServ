@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 14:34:40 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/09 14:13:08 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/15 12:06:38 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,8 +28,10 @@
 # include "Client.hpp"
 # include "ConfigServer.hpp"
 # include "CGI.hpp"
+#include "Request.hpp"
+#include <fcntl.h>
 
-# define MAX_EVENTS 10
+# define MAX_EVENTS 200
 # define RED     "\033[31m"      /* Red */
 # define GREEN   "\033[32m"      /* Green */
 # define YELLOW  "\033[33m"      /* Yellow */
@@ -40,6 +42,7 @@ class Server
 {
 	public:
 		/*	Default	*/
+		Server();
 		Server(int ac, char **av);
 		Server(Server const &copy);
 		~Server();
@@ -47,27 +50,32 @@ class Server
 
 		/*	Set Up Config Server	*/
 		void	SetUpServer();
+		void	CleanSetError();
 		void	CheckConfigServer();
 		void	ParseConfig(std::vector<std::string> &fileArray);
-		void	CleanSetError();
 
 		/*	Starting Part	*/
 		void	StopServer();
 		void	StartServer();
-		// void	AcceptClient(int index);
 		bool	IsSocketServer(int fd);
 		void	AcceptClient(int fd, int idClient);
 
 		/*	Set Private Attribute	*/
-		// void	SetFdServer(int fd);
 		void	SetNumberConfig(int number);
 		void	SetClient(Client const &client);
-		// void	SetSockAddr(struct sockaddr_in sockaddr);
 		void	SetConfigServer(ConfigServer const &config);
 
 		/*	Get Private Attribute	*/
+		int	GetIndexClient(int fd);
 		int	GetNumberConfig( void );
-		ConfigServer&	GetConfigServer( int index);
+		ConfigServer	&GetConfigServer( int index);
+		bool	IsCgiEvent(int fd);
+		int 	GetClientByPipe(int fd);
+		void	HandleCgiRequest(ConfigServer &config, Request const &req, char *buff, int indexClient);
+		
+		void	SendCgiResponse(int i);
+		void	CheckTimeoutClient( void );
+		void	CatchClientRequest(int i, int &NbClient);
 
 	private:
 		int	_numberConfig;

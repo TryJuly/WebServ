@@ -1,8 +1,8 @@
 #ifndef REQUEST_HPP
 # define REQUEST_HPP
 
-#include <iostream>
 #include <map>
+#include <iostream>
 
 class Request {
 
@@ -22,7 +22,7 @@ class Request {
         Request& operator=(const Request& other);
         ~Request();
 
-        Request(char *buff);
+        Request(std::string buff);
         std::string getMethod(void) const;
         std::string getPath(void) const ;
         std::map<std::string, std::string> getHeaders(void) const;
