@@ -179,7 +179,7 @@ void Server::StartServer()
 		if (nb == -1)
 			throw (std::runtime_error("Error: Poll."));
 		for (unsigned int i = 0; i < _fds.size(); i++) {
-				if (_fds[i].revents & POLLIN) {
+				if (_fds[i].revents != 0) {
 					if (IsSocketServer(_fds[i].fd)) {
 						// AcceptClient(_fds[i].fd, IdClient);
 						// IdClient++;

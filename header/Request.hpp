@@ -13,6 +13,7 @@ class Request {
         std::map<std::string, std::string> _headers;
         std::string _body;
         bool	_isCGI;
+        void    fillHeaders(std::string req);
 
     public:
 

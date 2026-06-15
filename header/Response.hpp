@@ -23,6 +23,8 @@ class Response {
         void    getResponse(Request& req, ConfigServer& config);
         void    postResponse(Request& req, ConfigServer& config);
         void    deleteResponse(Request& req, ConfigServer& config);
+        void    sendIndex(ConfigServer& config);
+        void    sendRedir(std::string path, ConfigServer& config, ConfigLocation& loc);
 
     public:
 
