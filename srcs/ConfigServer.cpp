@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 08:36:43 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/09 14:25:23 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/11 13:53:54 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,6 +52,10 @@ ConfigServer::ConfigServer()
 	if (stat("./var/www/errors/404.html", &st) != 0)
 		throw (std::invalid_argument("Error: Invalid path : ./var/www/errors/404.html"));
 	_errorPages.insert(std::pair<int, std::string>(404, "./var/www/errors/404.html"));
+
+	if (stat("./var/www/errors/405.html", &st) != 0)
+		throw (std::invalid_argument("Error: Invalid path : ./var/www/errors/405.html"));
+	_errorPages.insert(std::pair<int, std::string>(405, "./var/www/errors/405.html"));
 
 	if (stat("./var/www/errors/500.html", &st) != 0)
 		throw (std::invalid_argument("Error: Invalid path : ./var/www/errors/500.html"));

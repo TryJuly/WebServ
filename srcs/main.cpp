@@ -3,32 +3,28 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
+/*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 17:15:09 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/09 11:08:48 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/12 16:44:58 by seully           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <signal.h>
 #include <iostream>
 #include <stdexcept>
+#include <signal.h>
 #include "../header/Server.hpp"
 
 void	PrintFullConfigServer(Server &server);
 
 int	main(int ac, char **av)
 {
-	(void)ac;
-	(void)av;
+	// signal(SIGINT, signalHandler);
 	try {
 		if (ac > 2)
 			throw (std::invalid_argument("Error: Too many arguments."));
 		Server server(ac, av);
-		std::cout << server.GetNumberConfig() << std::endl;
-
-		// PrintFullConfigServer(server);
-
 		server.StartServer();
 	}
 	catch(const std::exception& e) {
