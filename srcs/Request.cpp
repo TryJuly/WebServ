@@ -27,7 +27,7 @@ Request::Request(std::string buff) {
 
     std::string req = static_cast<std::string>(buff);
     std::string first_line = req.substr(0, req.find_first_of('\n'));
-    std::cout << buff << std::endl;
+    //std::cout << req << std::endl << std::endl;
     //method
     if (first_line.find("GET") != first_line.npos) {
         _method = first_line.substr(0, 3);
@@ -41,6 +41,9 @@ Request::Request(std::string buff) {
     //path
     _path = first_line.substr(first_line.find_first_of('/'), first_line.find_last_of(' ') - (first_line.find_first_of('/')));
 
+    //headers
+    fillHeaders(req);
+
 	//	CGI Check
 	size_t	pos = _path.find_first_of(".");
 	if (pos != std::string::npos) {
@@ -52,9 +55,35 @@ Request::Request(std::string buff) {
 	}
 
     //body
-    size_t body_pos = req.find_last_of("\r\n\r\n");
+    size_t body_pos = req.find("\r\n\r\n");
+    if (body_pos == std::string::npos) {
+        body_pos = req.find("\n\n");
+        body_pos += 2;
+    }
+    else
+        body_pos += 4;
     _body = req.substr(body_pos);
 
+}
+
+void Request::fillHeaders(std::string req) {
+    size_t pos = req.find("\n") + 1;
+    while (pos < req.size()) {
+        size_t end = req.find("\n", pos);
+        if (end != std::string::npos && req[end - 1] == '\r')
+            end--;
+        if (end == std::string::npos || end ==  pos)
+            break;
+        std::string line = req.substr(pos, end - pos);
+        size_t point = line.find(":");
+        if (point != std::string::npos) {
+            std::string key = line.substr(0, point);
+            std::string value = line.substr(point + 2);
+            _headers.insert(std::make_pair(key, value));
+            std::cout << key << " : " << value << std::endl;
+        }
+        pos = end + 2;
+    }
 }
 
 std::string Request::getMethod(void) const {

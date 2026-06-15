@@ -32,7 +32,7 @@ server {
     }
 
     location /old {
-        redirect 301 ./var/www/new;
+        redirect 301 /;
     }
 }
 
