@@ -41,15 +41,16 @@ Response::Response( Request& req, ConfigServer& config) {
 }
 
 void Response::sendRedir(std::string path, ConfigServer& config, ConfigLocation& loc) {
-    std::cout << "on y est" << path << config.GetIndex() << std::endl;
-
-    //juste renvoyer path redir, pas besoin de checker que ca existe
     std::string redir = loc.GetRedir();
-    std::cout << redir << std::endl;
     _status = "HTTP/1.1 301 Moved Permanently\r\n";
     std::ostringstream port;
     port << config.GetPort();
-    _headers.insert(std::make_pair("Location: ", "http://" + config.GetServerName() + ":" + port.str() + redir));
+    size_t filePos = path.find('/', 1);
+    std::string file = "";
+    if (filePos != std::string::npos)
+        file = path.substr(filePos);
+    _headers.insert(std::make_pair("Location: ", "http://" + config.GetServerName() + ":" + port.str() + redir + file));
+    _headers.insert(std::make_pair("Content-Length:", "0"));
 }
 
 void Response::getResponse(Request& req, ConfigServer& config) {
@@ -81,6 +82,9 @@ void Response::getResponse(Request& req, ConfigServer& config) {
         if (stat(f_path.c_str(), &sb) != 0 || S_ISDIR(sb.st_mode)) {
             if (loc.GetAutoIndex())
                 sendIndex(config);
+            else if (loc.Getindex() != "") {
+                sendLocIndex(config, loc);
+            }
             else
                 sendError(404, config);
             return;
@@ -92,6 +96,23 @@ void Response::getResponse(Request& req, ConfigServer& config) {
         _headers.insert(length);
         _body = extract_file(f_path.c_str());
     }
+}
+
+void Response::sendLocIndex(ConfigServer& config, ConfigLocation& loc) {
+    std::string f_path = loc.GetRoot() + loc.GetPath() + "/" + loc.Getindex();
+    std::cout << f_path << std::endl;
+
+    struct stat sb;
+    if (stat(f_path.c_str(), &sb) != 0) {
+        sendError(404, config);
+        return ;
+    }
+    _status = "HTTP/1.1 200 OK\r\n";
+    std::pair<std::string, std::string> type("Content-Type:", "*/*");
+    std::pair<std::string, std::string> length("Content-Length:", return_file_length(sb.st_size));
+    _headers.insert(type);
+    _headers.insert(length);
+    _body = extract_file(f_path);
 }
 
 void Response::postResponse(Request& req, ConfigServer& config) {

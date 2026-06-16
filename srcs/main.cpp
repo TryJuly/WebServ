@@ -25,7 +25,7 @@ int	main(int ac, char **av)
 		if (ac > 2)
 			throw (std::invalid_argument("Error: Too many arguments."));
 		Server server(ac, av);
-		// server.StartServer();
+		server.StartServer();
 	}
 	catch(const std::exception& e) {
 		std::cerr << RED << e.what() << RESET << std::endl;
