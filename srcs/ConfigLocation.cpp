@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 09:35:48 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/09 13:38:22 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/16 12:03:18 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -124,12 +124,12 @@ void	ConfigLocation::SetRedir(std::string const &str)
 	size_t	endKey = str.find_first_of(" \t");
 	if (endKey == std::string::npos)
 			throw (std::invalid_argument("Error: Invalid syntax line: " + str));
-	std::string val = str.substr(endKey + 1, str.size() - endKey);
+	std::string val = GetRoot() + str.substr(endKey + 1, str.size() - endKey);
 	//		ADD
 	struct stat st;
 	if (stat(val.c_str(), &st) != 0)
 		throw (std::invalid_argument("Error: Invalid path location: " + val));
-	_redir = val;
+	_redir = str.substr(endKey + 1, str.size() - endKey);
 	return ;
 }
 
@@ -148,16 +148,27 @@ void	ConfigLocation::SetMethodes(std::string const &str)
 	while (std::getline(ss, word, ' '))
 		v.push_back(word);
 
+	int g = 0;
+	int p = 0;
+	int d = 0;
 	for (size_t i = 0; i < v.size(); i++) {
 		ClearSpace(v[i]);
-		if (!v[i].compare("GET"))
+		if (!v[i].compare("GET")) {
 			_get = true;
-		else if (!v[i].compare("POST"))
+			g++;
+		}
+		else if (!v[i].compare("POST")) {
 			_post = true;
-		else if (!v[i].compare("DELETE"))
+			p++;
+		}
+		else if (!v[i].compare("DELETE")) {
 			_delete = true;
+			d++;
+		}
 		else
 			throw (std::invalid_argument("Error: Invalid syntax methode: " + str));
+		if (g > 1 || p > 1 || d > 1)
+			throw (std::invalid_argument("Error: Two same methode: " + str));
 	}
 	return ;
 }
