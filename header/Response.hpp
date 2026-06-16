@@ -25,6 +25,7 @@ class Response {
         void    deleteResponse(Request& req, ConfigServer& config);
         void    sendIndex(ConfigServer& config);
         void    sendRedir(std::string path, ConfigServer& config, ConfigLocation& loc);
+        void    sendLocIndex(ConfigServer& config, ConfigLocation& loc);
 
     public:
 

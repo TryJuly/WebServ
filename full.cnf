@@ -37,7 +37,7 @@ server {
     location /new {
         methods GET;
         root ./var/www;
-        index index.html;
+        index menu.html;
     }
 
     location /cgi-bin {
