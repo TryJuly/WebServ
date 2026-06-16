@@ -35,7 +35,9 @@ Response::Response( Request& req, ConfigServer& config) {
         return;
     }
     //OTHERS
-    else {}
+    else {
+        // Bad request 400 ou Method not allowed 405 ?
+    }
 }
 
 void Response::sendRedir(std::string path, ConfigServer& config, ConfigLocation& loc) {
@@ -47,7 +49,7 @@ void Response::sendRedir(std::string path, ConfigServer& config, ConfigLocation&
     _status = "HTTP/1.1 301 Moved Permanently\r\n";
     std::ostringstream port;
     port << config.GetPort();
-    _headers.insert(std::make_pair("Location: ", "http://" + config.GetServerName() + ":" + port.str()));
+    _headers.insert(std::make_pair("Location: ", "http://" + config.GetServerName() + ":" + port.str() + redir));
 }
 
 void Response::getResponse(Request& req, ConfigServer& config) {
@@ -94,7 +96,7 @@ void Response::getResponse(Request& req, ConfigServer& config) {
 
 void Response::postResponse(Request& req, ConfigServer& config) {
     std::string path = req.getPath();
-    std::cout << path << std::endl;
+
     int index_location = loc_index(path, config);
 
     if (index_location < 0) {
@@ -105,23 +107,18 @@ void Response::postResponse(Request& req, ConfigServer& config) {
         sendError(405, config);
         return ;
     }
-    // get upload path form config location
 
     ConfigLocation loc = config.GetConfigLocation(index_location);
     std::string upload_path = loc.GetUpload();
-    std::cout << upload_path << std::endl;
-
-    //req check Content-type
 
     std::map<std::string, std::string> req_head = req.getHeaders();
     std::map<std::string, std::string>::iterator c_type = req_head.find("Content-Type");
     
-    if (c_type->second.find("multipart/form-data") == std::string::npos)
+    if (c_type->second.find("multipart/form-data") == std::string::npos){
+        std::cout << "Cava pas etrre possible" << std::endl;
         return ; //Error
+}
     std::string delimiter = c_type->second.substr(c_type->second.find("boundary=") + 9);
-    std::cout << delimiter << std::endl;
-
-    //std::cout << req.getBody() << std::endl;
 
     std::string req_body = req.getBody();
 
@@ -143,11 +140,15 @@ void Response::postResponse(Request& req, ConfigServer& config) {
             file = v[i].substr(v[i].find('=') + 2 , (v[i].size() - 2) - (v[i].find('=') + 2));
     }
 
-    std::cout << file << std::endl;
-
-    //upload file
     std::string f_path = upload_path + "/" + file;
-    //is there already this file with the same name ?
+    
+    struct stat sb;
+    if (stat(f_path.c_str(), &sb) == 0) {
+        std::cout << "a file with this name already exists" << std::endl;
+        sendError(409, config);
+        return ;
+    }
+
     std::ofstream ofs(f_path.c_str());
     
     size_t body_pos = req_body.find("\r\n\r\n", req_body.find("--" + delimiter));
@@ -186,10 +187,14 @@ void Response::deleteResponse(Request& req, ConfigServer& config) {
 void Response::sendIndex(ConfigServer& config) {
     std::string f_path = config.GetRoot() + "/" + config.GetIndex();
     std::cout << f_path << std::endl;
+
+    struct stat sb;
+    if (stat(f_path.c_str(), &sb) != 0) {
+        sendError(404, config);
+        return ;
+    }
     _status = "HTTP/1.1 200 OK\r\n";
     std::pair<std::string, std::string> type("Content-Type:", "*/*");
-    struct stat sb;
-    stat(f_path.c_str(), &sb);
     std::pair<std::string, std::string> length("Content-Length:", return_file_length(sb.st_size));
     _headers.insert(type);
     _headers.insert(length);
@@ -230,6 +235,11 @@ void Response::sendError(int status, ConfigServer& config) {
             _status = "HTTP/1.1 405 Method Not Allowed\r\n";
             break;
 
+        case 409:
+            err_file = config.GetErrorPages(status);
+            _status = "HTTP/1.1 409 Conflict\r\n";
+            break;
+        
         default:
             std::cout << "Error" << std::endl;
             break;
@@ -248,6 +258,7 @@ std::string extract_file(std::string filename) {
     ifs.open(filename.c_str());
     if (!(ifs.is_open())) {
         std::cout << "Not good file extraction" << std::endl;
+        return ("NULL");
     }
     std::string body = "";
     std::string line;

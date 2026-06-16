@@ -349,7 +349,7 @@ void Server::StartServer()
 				else
 					CatchClientRequest(i, NbClient);
 			}
-			CheckTimeoutClient();
+			//CheckTimeoutClient();
 			std::cout << "Nb Client is: " << NbClient << std::endl;
 		}
 		// NbRequest++;
