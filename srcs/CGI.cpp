@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/02 15:35:11 by seully            #+#    #+#             */
-/*   Updated: 2026/06/15 14:48:39 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/16 09:52:24 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -137,6 +137,9 @@ void	CGI::ParseHeaders(std::string const &request)
 	return ;
 }
 
+
+static	std::string	SetEnvpVarName(std::string str);
+
 void	CGI::SetEnvpCGI(ConfigLocation const &config)
 {
 	std::map<std::string, std::string>::iterator it = _stock.find("Methode");
@@ -151,7 +154,7 @@ void	CGI::SetEnvpCGI(ConfigLocation const &config)
 	for (std::map<std::string, std::string>::iterator it = _stock.begin(); it != _stock.end(); it++) {
 		if (it->first == "Body")
 			continue ;
-		std::string input = it->first + "=" + it->second;
+		std::string input = SetEnvpVarName(it->first) + "=" + it->second;
 		_envp[i] = new char[input.size() + 1];
 		std::strcpy(_envp[i], input.c_str());
 		i++;
@@ -161,7 +164,6 @@ void	CGI::SetEnvpCGI(ConfigLocation const &config)
 	_scriptPath = config.GetRoot() + _stock["Path"];	// Path exec CGI /usr/bin/python3
 	_scriptPath = _scriptPath.substr(_scriptPath.find('/') + 1);
 	struct stat sstat;
-	// std::cout << RED << "HERE" << RESET << std::endl;
 	if (stat(_scriptPath.c_str(), &sstat) != 0)
 		throw (std::invalid_argument("404 Error: Invalid path location: " + _scriptPath));
 	std::string extension = _scriptPath.substr(_scriptPath.find_last_of('.'));
@@ -169,76 +171,24 @@ void	CGI::SetEnvpCGI(ConfigLocation const &config)
 	return ;
 }
 
-// std::string	CGI::Execute(ConfigLocation const &config)
-// {
-// 	SetEnvpCGI(config);
-// 	for (size_t	i = 0; _envp[i]; i++)
-// 		std::cout << _envp[i] << std::endl;
-
-// 	char *argv[] = {
-// 		const_cast<char*>(_inter.c_str()),
-// 		const_cast<char*>(_scriptPath.c_str()),
-// 		NULL
-// 	};
-
-// 	int pipeFd[2];
-// 	std::string	response;
-// 	if (pipe(pipeFd) == -1)
-// 		throw (std::runtime_error("500 Error: pipe() failed: " + std::string(strerror(errno))));
-
-// 	SetTimeStart(std::time(NULL));
-// 	pid_t child = fork();
-// 	if (child == -1)
-// 		throw (std::runtime_error("500 Error fork() failed: " + std::string(strerror(errno))));
-// 	if (child == 0) {
-// 		dup2(pipeFd[0], STDIN_FILENO);
-// 		dup2(pipeFd[1], STDOUT_FILENO);
-// 		close(pipeFd[0]);
-// 		close(pipeFd[1]);
-// 		execve(argv[0], argv, _envp);
-// 		std::cerr << "Error: child Process" << std::endl;
-// 		exit(1);
-// 	}
-// 	else {
-// 		std::map<std::string, std::string>::iterator it = _stock.find("Body");
-// 		if (it != _stock.end())
-// 		write(pipeFd[1], it->second.c_str(), it->second.size());
-
-// 		close(pipeFd[1]);
-// 		char buff[1024];
-// 		fcntl(pipeFd[0], F_SETFL, O_NONBLOCK);
-// 		while (true) {
-// 			if (time(NULL) - _cgiStart > 10) {
-// 				kill(child, SIGKILL);
-// 				waitpid(child, NULL, 0);
-// 				throw (std::runtime_error("504 Error: Timeout cgi"));
-// 			}
-// 			int bytes = read(pipeFd[0], buff, sizeof(buff) - 1);
-// 			if (bytes > 0) {
-// 				buff[bytes] = '\0';
-// 				response += buff;
-// 			}
-// 			else if (bytes == 0)
-// 				break ;
-// 			else if (errno != EAGAIN)
-// 				break ;
-// 		}
-// 		close(pipeFd[0]);
-// 	}
-
-	//	Create status line and content-length
-// 	if (response.find("Content-Length:") == std::string::npos) {
-// 		std::string body = response.substr(response.find("\r\n\r\n") + 4);
-// 		std::string length = return_file_length(body.size());
-// 		std::string contentLength = "Content-Length: " + length + "\r\n";
-// 		response = contentLength + response;
-// 	}
-// 	if (response.substr(0, 5) != "HTTP/") {
-// 		std::string status = "HTTP/1.1 200 OK\r\n";
-// 		response = status + response;
-// 	}
-// 	return (response);
-// }
+static	std::string	SetEnvpVarName(std::string str)
+{
+	if (!str.compare("Methode"))
+		return (std::string("REQUEST_METHODE"));
+	else if (!str.compare("Query"))
+		return (std::string("QUERY_STRING"));
+	else if (!str.compare("Path"))
+		return (std::string("PATH_INFO"));
+	else if (!str.compare("Content-Length"))
+		return (std::string("CONTENT_LENGTH"));
+	else if (!str.compare("Content-type"))
+		return (std::string("CONTENT_TYPE"));
+	else if (!str.compare("Host"))
+		return (std::string("HTTP_HOST"));
+	else if (!str.compare("Version"))
+		return (std::string("SERVER_PROTOCOL"));
+	return (std::string(str));
+}
 
 /*
 	Envp parsing cgi
@@ -329,8 +279,14 @@ void	CGI::LaunchCGI(ConfigLocation const &config)
 	};
 	int pipeIn[2];
 	int pipeOut[2];
-	if (pipe(pipeIn) == -1 || pipe(pipeOut) == -1)
+	if (pipe(pipeIn) == -1)
 		throw (std::runtime_error("500 Error: pipe() failed: "));
+
+	if (pipe(pipeOut) == -1) {
+		close(pipeIn[0]);
+		close(pipeIn[1]);
+		throw (std::runtime_error("500 Error: pipe() failed: "));
+	}
 
 	pid_t	child = fork();
 	if (child == -1)

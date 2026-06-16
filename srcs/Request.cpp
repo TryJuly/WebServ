@@ -1,4 +1,5 @@
 # include "../header/Request.hpp"
+#include <cstddef>
 
 Request::Request() {
 	_isCGI = false;
@@ -45,14 +46,23 @@ Request::Request(std::string buff) {
     fillHeaders(req);
 
 	//	CGI Check
-	size_t	pos = _path.find_first_of(".");
-	if (pos != std::string::npos) {
-		std::string extension = _path.substr(pos,_path.size());
-		if (extension == ".py") {
-			_isCGI = true;
-			return ;
-		}
-	}
+    size_t  pos = _path.find_last_of('.');
+    if (pos != std::string::npos) {
+        size_t  queryPos = _path.find('?', pos);
+        std::string extension = _path.substr(pos, queryPos - pos);
+        if (extension == ".py") {
+            _isCGI = true;
+            return ;
+        }
+    }
+	// size_t	pos = _path.find_first_of(".");
+	// if (pos != std::string::npos) {
+	// 	std::string extension = _path.substr(pos,_path.size());
+	// 	if (extension == ".py") {
+	// 		_isCGI = true;
+	// 		return ;
+	// 	}
+	// }
 
     //body
     size_t body_pos = req.find("\r\n\r\n");

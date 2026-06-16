@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 14:38:06 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/15 15:25:47 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/16 09:53:58 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,8 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
+#include <string>
+#include <sys/poll.h>
 #include "../header/Server.hpp"
 #include "../header/Request.hpp"
 #include "../header/Response.hpp"
@@ -181,8 +183,10 @@ void	Server::AcceptClient(int fd, int idClient)
 bool	Server::IsCgiEvent(int fd)
 {
 	for (size_t	i = 0; i < _client.size(); i++) {
-		if (_client[i].GetIsCgi() == true && fd == _client[i].GetPipeFd())
+		if (_client[i].GetIsCgi() == true && fd == _client[i].GetPipeFd()) {
+			std::cout << RED << "Iscgi true" << RESET << std::endl;
 			return (true);
+		}
 	}
 	return (false);
 }
@@ -208,20 +212,22 @@ void	Server::SendCgiResponse(int i)
 		throw (std::runtime_error("500 Error internal"));
 	if (bytes > 0) {
 		buff[bytes] = '\0';
-		_client[indexClient].AppendCgiResponse(buff);
+		_client[indexClient].AppendCgiResponse(buff, bytes);
 	}
 	else if (bytes == 0) {
 		std::string response = _client[indexClient].GetCgiResponse();
 		size_t	sep = response.find("\r\n\r\n");
-		if (sep == std::string::npos)
+		size_t	offs = 4;
+		if (sep == std::string::npos) {
 			sep = response.find("\r\n");
+			offs = 2;
+		}
 		if (sep == std::string::npos) {
 			std::string length = return_file_length(response.size());
 			response = "Content-Length: " + length + "\r\n\r\n" + response;
 		}
 		else {
-			std::string body = response.substr(response.find("\r\n\r\n") + 4);
-			// std::string body = response.substr(sep + (response[sep + 1] == '\n' ? 2 : 4));	// check
+			std::string	body = response.substr(sep + offs);
 			std::string length = return_file_length(body.size());
 			response = "Content-Length: " + length + "\r\n" + response;
 		}
@@ -231,7 +237,9 @@ void	Server::SendCgiResponse(int i)
 		}
 		write(_client[indexClient].GetFd(), response.c_str(), response.size());
 		close(_fds[i].fd);
+		waitpid(_client[indexClient].GetPidCgi(), NULL, WNOHANG);	// ADD
 		_fds.erase(_fds.begin() + i);
+		i--;
 		_client[indexClient].SetIsCgi(false);
 		_client[indexClient].CleanCgiResponse();
 		_client[indexClient].ResetRequest();
@@ -286,6 +294,7 @@ void	Server::CatchClientRequest(int i, int &NbClient)
 		if (bytes == 0) {
 			close(_client[indexClient].GetFd());
 			_fds.erase(_fds.begin() + i);
+			i--;
 			NbClient--;
 		}
 		else {
@@ -302,7 +311,6 @@ void	Server::CatchClientRequest(int i, int &NbClient)
 				Response rep(req, config);
 				std::string response = rep.printResponse();
 				write(_client[indexClient].GetFd(), response.c_str(), response.size());
-				// std::cout << "###  Server Message: ###\n\n" << response << "\n###  End server message ###\n" << std::endl;
 			}
 			_client[indexClient].ResetRequest();
 		}
@@ -314,6 +322,8 @@ void	Server::CatchClientRequest(int i, int &NbClient)
 		ConfigServer &config = _configServer[_client[indexClient].GetIndexConfigServer()];
 		std::string response = SendErrorPage(config, error);
 		write(_fds[i].fd, response.c_str(), response.size());
+		_client[indexClient].CleanCgiResponse();
+		_client[indexClient].ResetRequest();
 	}
 }
 
@@ -339,8 +349,8 @@ void Server::StartServer()
 				else
 					CatchClientRequest(i, NbClient);
 			}
-			// CheckTimeoutClient();
-			// std::cout << "Nb Client is: " << NbClient << std::endl;
+			CheckTimeoutClient();
+			std::cout << "Nb Client is: " << NbClient << std::endl;
 		}
 		// NbRequest++;
 	}
@@ -365,7 +375,6 @@ void	Server::CheckTimeoutClient( void )
 		}
 		std::cout << "checking cgi timeout, isCgi: " << _client[k].GetIsCgi() << " diff: " << std::time(NULL) - _client[k].GetTimeCgi() << std::endl;
 		if (_client[k].GetIsCgi() && std::time(NULL) - _client[k].GetTimeCgi() > 10) {
-			// std::cout << "CIGTIMEOOUT" << std::endl;
 			int pipeFd = _client[k].GetPipeFd();
 			kill(_client[k].GetPidCgi(), SIGKILL);
 			waitpid(_client[k].GetPidCgi(), NULL, 0);
@@ -378,7 +387,6 @@ void	Server::CheckTimeoutClient( void )
 			close(pipeFd);
 			ConfigServer	&config = _configServer[_client[k].GetIndexConfigServer()];
 			std::string response = SendErrorPage(config, 504);
-			// std::cout << "Error page: " << response << std::endl;
 			write(_client[k].GetFd(), response.c_str(), response.size());
 			_client[k].SetIsCgi(false);
 		}
