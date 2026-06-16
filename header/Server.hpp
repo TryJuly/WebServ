@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
+/*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 14:34:40 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/15 12:06:38 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/15 21:05:28 by seully           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,7 +71,7 @@ class Server
 		ConfigServer	&GetConfigServer( int index);
 		bool	IsCgiEvent(int fd);
 		int 	GetClientByPipe(int fd);
-		void	HandleCgiRequest(ConfigServer &config, Request const &req, char *buff, int indexClient);
+		void	HandleCgiRequest(ConfigServer &config, Request const &req, int indexClient);
 		
 		void	SendCgiResponse(int i);
 		void	CheckTimeoutClient( void );

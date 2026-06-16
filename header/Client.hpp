@@ -6,7 +6,7 @@
 /*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 13:10:16 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/12 16:54:45 by seully           ###   ########.fr       */
+/*   Updated: 2026/06/15 20:55:12 by seully           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,7 +65,7 @@ class Client
 		void	SetIsCgi(bool value);
 		bool	GetIsCgi( void );
 		std::string	GetCgiResponse( void );
-		void	AppendCgiResponse(char *buff);
+		void	AppendCgiResponse(char *buff, int bytes);
 		void	CleanCgiResponse( void );
 		void	SetTimeCgi(std::time_t time);
 		std::time_t	GetTimeCgi(void );

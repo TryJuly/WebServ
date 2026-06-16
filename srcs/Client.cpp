@@ -6,7 +6,7 @@
 /*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 13:12:35 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/12 17:04:22 by seully           ###   ########.fr       */
+/*   Updated: 2026/06/15 20:55:52 by seully           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,7 +52,7 @@ Client&	Client::operator=(Client const &copy)
 		_request = copy._request;
 		_idClient = copy._idClient;
 		_fdConfigServer = copy._fdConfigServer;
-		_indexConfigServer = copy._fdConfigServer;
+		_indexConfigServer = copy._indexConfigServer;
 		_time = copy._time;
 		_isCgi = copy._isCgi;
 		_cgiPid = copy._cgiPid;
@@ -210,10 +210,9 @@ bool	Client::GetIsCgi( void )
 std::string	Client::GetCgiResponse( void )
 { return (_cgiResponse); }
 
-void	Client::AppendCgiResponse(char *buff)
+void	Client::AppendCgiResponse(char *buff, int bytes)
 {
-	std::string str = buff;
-	_cgiResponse = _cgiResponse + str;
+	_cgiResponse.append(buff, bytes);
 	return ;
 }
 
