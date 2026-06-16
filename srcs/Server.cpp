@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 14:38:06 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/16 09:53:58 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/16 12:02:53 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,8 @@
 #include "../header/Server.hpp"
 #include "../header/Request.hpp"
 #include "../header/Response.hpp"
+
+int run = 1;
 
 static int	IsBalance(std::vector<std::string> &fileArray);
 static int	IsValideBloc(std::vector<std::string> &serverBloc);
@@ -61,10 +63,46 @@ Server::Server(int ac, char **av)
 			fileArray.push_back(buff);
 	}
 	fd.close();
+	if (fileArray.empty())
+		throw (std::invalid_argument("Error: Empty file: " + fileName));
 	ParseConfig(fileArray);
 	CleanSetError();
 	CheckConfigServer();
 	SetUpServer();
+	return ;
+}
+void	signalHandler(int sig)
+{
+	(void)sig;
+	run = 0;
+	return ;
+}
+
+void Server::StartServer()
+{
+	int	IdClient = 0;
+	while (run) {
+		signal(SIGINT, signalHandler);
+		int nfds = _fds.size();
+		int nb = poll(&_fds[0], nfds , 5000);
+		if (nb == -1)
+			throw (std::runtime_error("Error: Poll()." + std::string(strerror(errno))));
+		for (unsigned int i = 0; i < _fds.size(); i++) {
+			if (_fds[i].revents != 0) {
+				if (IsSocketServer(_fds[i].fd)) {
+					AcceptClient(_fds[i].fd, IdClient);
+					IdClient++;
+					_numberClient++;
+				}
+				else if (IsCgiEvent(_fds[i].fd))
+					SendCgiResponse(i);
+				else
+					CatchClientRequest(i, _numberClient);
+			}
+			CheckTimeoutClient();
+			std::cout << "Nb Client is: " << _numberClient << std::endl;
+		}
+	}
 	return ;
 }
 
@@ -94,35 +132,6 @@ void	Server::SetUpServer()
 }
 
 /*	Function to verify if the configuration parsing is valid*/
-void	Server::CheckConfigServer()
-{
-	struct stat	sstat;
-	for (size_t	i = 0; i < _configServer.size(); i++) {
-		ConfigServer &configServer = GetConfigServer(i);
-		if (configServer.GetPort() < 0 || configServer.GetPort() > 65535)
-			throw (std::invalid_argument("Error: Invalid port."));
-
-		for (int j = 0; j < configServer.GetNumberLocation(); j++) {
-			ConfigLocation &location = configServer.GetConfigLocation(j);
-			std::string path = location.GetRoot() + location.GetPath();
-			if (stat(path.c_str(), &sstat) != 0)
-				throw (std::invalid_argument("Error: Invalid path location: " + path));
-			if (stat(location.GetRoot().c_str(), &sstat) != 0)
-				throw (std::invalid_argument("Error: Invalid path location: " + location.GetRoot()));
-			if (!location.GetUpload().empty() && stat(location.GetUpload().c_str(), &sstat) != 0)
-				throw (std::invalid_argument("Error: Invalid path location: " + location.GetUpload()));
-			if (!location.GetRedir().empty() && stat(location.GetRedir().c_str(), &sstat) != 0)
-				throw (std::invalid_argument("Error: Invalid path location: " + location.GetRedir()));
-		}
-		std::map<int, std::string>	pMap = configServer.GetMapError();
-		for (std::map<int, std::string>::iterator it = pMap.begin(); it != pMap.end(); it++) {
-			std::string errorPath = it->second;
-			if (stat(errorPath.c_str(), &sstat) != 0)
-				throw (std::invalid_argument("Error: Invalid path location: " + errorPath));
-		}
-	}
-	return ;
-}
 
 void	PrintConfig(Server &server)
 {
@@ -183,10 +192,8 @@ void	Server::AcceptClient(int fd, int idClient)
 bool	Server::IsCgiEvent(int fd)
 {
 	for (size_t	i = 0; i < _client.size(); i++) {
-		if (_client[i].GetIsCgi() == true && fd == _client[i].GetPipeFd()) {
-			std::cout << RED << "Iscgi true" << RESET << std::endl;
+		if (_client[i].GetIsCgi() == true && fd == _client[i].GetPipeFd())
 			return (true);
-		}
 	}
 	return (false);
 }
@@ -327,44 +334,15 @@ void	Server::CatchClientRequest(int i, int &NbClient)
 	}
 }
 
-void Server::StartServer()
-{
-	int NbClient = 0;
-	int	IdClient = 0;
-
-	while (true) {
-		int nfds = _fds.size();
-		int nb = poll(&_fds[0], nfds , 5000);
-		if (nb == -1)
-			throw (std::runtime_error("Error: Poll."));
-		for (unsigned int i = 0; i < _fds.size(); i++) {
-			if (_fds[i].revents != 0) {
-				if (IsSocketServer(_fds[i].fd)) {
-					AcceptClient(_fds[i].fd, IdClient);
-					IdClient++;
-					NbClient++;
-				}
-				else if (IsCgiEvent(_fds[i].fd))
-					SendCgiResponse(i);
-				else
-					CatchClientRequest(i, NbClient);
-			}
-			CheckTimeoutClient();
-			std::cout << "Nb Client is: " << NbClient << std::endl;
-		}
-		// NbRequest++;
-	}
-}
-
 void	Server::CheckTimeoutClient( void )
 {
 	for (size_t k = 0; k < _client.size(); k++) {
 		if (std::time(NULL) - _client[k].GetTime() > 60) {
-			std::cout << "Time:" << std::time(NULL) << "Client: " << _client[k].GetTime() << std::endl;
 			int fdClose = _client[k].GetFd();
 			for (size_t j = 0; j < _fds.size(); j++) {
 				if (_fds[j].fd == fdClose) {
 					_fds.erase(_fds.begin() + j);
+					_numberClient--;
 					break ;
 				}
 			}
@@ -373,7 +351,10 @@ void	Server::CheckTimeoutClient( void )
 			k--;
 			continue ;
 		}
-		std::cout << "checking cgi timeout, isCgi: " << _client[k].GetIsCgi() << " diff: " << std::time(NULL) - _client[k].GetTimeCgi() << std::endl;
+		if (_client[k].GetIsCgi() == true)
+			std::cout << "checking cgi timeout, isCgi: " << _client[k].GetIsCgi() << " diff: " << std::time(NULL) - _client[k].GetTimeCgi() << std::endl;
+		else
+			std::cout << "checking cgi timeout" << " diff: " << std::time(NULL) - _client[k].GetTimeCgi() << std::endl;
 		if (_client[k].GetIsCgi() && std::time(NULL) - _client[k].GetTimeCgi() > 10) {
 			int pipeFd = _client[k].GetPipeFd();
 			kill(_client[k].GetPidCgi(), SIGKILL);
@@ -484,91 +465,6 @@ static int	FindIndexServerFD(Server &server, int fd)
 	return (-1);
 }
 
-void	Server::ParseConfig(std::vector<std::string> &fileArray)
-{
-	int isBlance = IsBalance(fileArray);
-	if (isBlance > 0)
-		throw (std::invalid_argument("Error: Missing '}' in config file."));
-	else if (isBlance < 0)
-		throw (std::invalid_argument("Error: Missing '{' in config file."));
-
-	unsigned int i = (fileArray.size() - 1);
-	for (int j = 0; fileArray[i][j] != '}'; i--) {
-		if (fileArray[i][0] != '}' && fileArray[i][0] != '#')
-			throw (std::invalid_argument("Error: Invalid syntax config file."));
-	}
-
-	size_t	start = 0;
-	size_t	index = 0;
-	while (start < fileArray.size()) {
-		for (; start < fileArray.size(); start++) {
-			if (fileArray[start][0] != '#')
-				break ;
-		}
-
-		ssize_t end = EndChunk(fileArray, start);
-		if (end != -1) {
-			std::vector<std::string> serverChunk;
-			for (int i = start; i < end; i++)
-				serverChunk.push_back(fileArray[i]);
-
-			if (IsValideBloc(serverChunk))
-				throw (std::invalid_argument("Error: Invalid syntax."));
-			ConfigServer conf;
-			_configServer.push_back(conf);
-
-			_configServer[index].FillConfigServer(serverChunk);
-			index++;
-			start = end;
-			_numberConfig++;
-		}
-		else
-			break;
-	}
-	return ;
-}
-
-static int IsValideBloc(std::vector<std::string> &serverChunk)
-{
-	std::string first;
-	for (unsigned int i = 0; i < serverChunk.size(); i++) {
-		if (serverChunk[i][0] == '#')
-			continue ;
-		for (size_t j = 0; j < serverChunk[i].size(); j++) {
-			if (serverChunk[i][j] == ' ' || serverChunk[i][j] == '\t')
-				continue ;
-			first.push_back(serverChunk[i][j]);
-		}
-		break ;
-	}
-	if (first[0] != '#' && first.compare("server{"))
-		return (1);
-	for (unsigned int i = 0; i < serverChunk.size(); i++) {
-		if (serverChunk[i][0] == '#')
-			continue ;
-		if (serverChunk[i][0] != '{' && serverChunk[i][0] != '}' && serverChunk[i].size() < 5)	// Need to check
-			return (1);
-	}
-	return (0);
-}
-
-static int	IsBalance(std::vector<std::string> &fileArray)
-{
-	int balance = 0;
-	for (unsigned int i = 0; i < fileArray.size(); i++) {
-		for (int j = 0; fileArray[i][j]; j++) {
-			if (fileArray[i][j] == '{')
-				balance++;
-			else if (fileArray[i][j] == '}') {
-				balance--;
-				if (balance < 0)
-					return (-1);
-			}
-		}
-	}
-	return (balance);
-}
-
 void	Server::CleanSetError()
 {
 	int size = _configServer.size();
@@ -646,4 +542,120 @@ int	Server::GetIndexClient(int fd)
 			return (i);
 	}
 	return (-1);
+}
+
+/*	Config File Parsing	*/
+void	Server::ParseConfig(std::vector<std::string> &fileArray)
+{
+	int isBlance = IsBalance(fileArray);
+	if (isBlance > 0)
+		throw (std::invalid_argument("Error: Missing '}' in config file."));
+	else if (isBlance < 0)
+		throw (std::invalid_argument("Error: Missing '{' in config file."));
+
+	unsigned int i = (fileArray.size() - 1);
+	for (int j = 0; fileArray[i][j] != '}'; i--) {
+		if (fileArray[i][0] != '}' && fileArray[i][0] != '#')
+			throw (std::invalid_argument("Error: Invalid syntax in config file."));
+	}
+
+	size_t	start = 0;
+	size_t	index = 0;
+	while (start < fileArray.size()) {
+		for (; start < fileArray.size(); start++) {
+			if (fileArray[start][0] != '#')
+				break ;
+		}
+
+		ssize_t end = EndChunk(fileArray, start);
+		if (end != -1) {
+			std::vector<std::string> serverChunk;
+			for (int i = start; i < end; i++)
+				serverChunk.push_back(fileArray[i]);
+
+			if (IsValideBloc(serverChunk))
+				throw (std::invalid_argument("Error: Invalid syntax in config file."));
+			ConfigServer conf;
+			_configServer.push_back(conf);
+
+			_configServer[index].FillConfigServer(serverChunk);
+			index++;
+			start = end;
+			_numberConfig++;
+		}
+		else
+			break;
+	}
+	return ;
+}
+
+void	Server::CheckConfigServer()
+{
+	struct stat	sstat;
+	for (size_t	i = 0; i < _configServer.size(); i++) {
+		ConfigServer &configServer = GetConfigServer(i);
+		if (configServer.GetPort() < 0 || configServer.GetPort() > 65535)
+			throw (std::invalid_argument("Error: Invalid port."));
+
+		for (int j = 0; j < configServer.GetNumberLocation(); j++) {
+			ConfigLocation &location = configServer.GetConfigLocation(j);
+			std::string path = location.GetRoot() + location.GetPath();
+			if (stat(path.c_str(), &sstat) != 0)
+				throw (std::invalid_argument("Error: Invalid path location: " + path));
+			if (stat(location.GetRoot().c_str(), &sstat) != 0)
+				throw (std::invalid_argument("Error: Invalid path location: " + location.GetRoot()));
+			if (!location.GetUpload().empty() && stat(location.GetUpload().c_str(), &sstat) != 0)
+				throw (std::invalid_argument("Error: Invalid path location: " + location.GetUpload()));
+			// if (!location.GetRedir().empty() && stat(location.GetRedir().c_str(), &sstat) != 0)
+			// 	throw (std::invalid_argument("Error: Invalid path location: " + location.GetRedir()));
+		}
+		std::map<int, std::string>	pMap = configServer.GetMapError();
+		for (std::map<int, std::string>::iterator it = pMap.begin(); it != pMap.end(); it++) {
+			std::string errorPath = it->second;
+			if (stat(errorPath.c_str(), &sstat) != 0)
+				throw (std::invalid_argument("Error: Invalid path location: " + errorPath));
+		}
+	}
+	return ;
+}
+
+static int	IsBalance(std::vector<std::string> &fileArray)
+{
+	int balance = 0;
+	for (unsigned int i = 0; i < fileArray.size(); i++) {
+		for (int j = 0; fileArray[i][j]; j++) {
+			if (fileArray[i][j] == '{')
+				balance++;
+			else if (fileArray[i][j] == '}') {
+				balance--;
+				if (balance < 0)
+					return (-1);
+			}
+		}
+	}
+	return (balance);
+}
+
+static int IsValideBloc(std::vector<std::string> &serverChunk)
+{
+	std::string first;
+	for (unsigned int i = 0; i < serverChunk.size(); i++) {
+		if (serverChunk[i][0] == '#')
+			continue ;
+		for (size_t j = 0; j < serverChunk[i].size(); j++) {
+			if (serverChunk[i][j] == ' ' || serverChunk[i][j] == '\t')
+				continue ;
+			first.push_back(serverChunk[i][j]);
+		}
+		break ;
+	}
+	if (first[0] != '#' && first.compare("server{"))
+		return (1);
+	for (unsigned int i = 0; i < serverChunk.size(); i++) {
+		if (serverChunk[i][0] == '#')
+			continue ;
+		if (serverChunk[i][0] != '{' && serverChunk[i][0] != '}' && serverChunk[i].size() < 5)	// Need to check
+			return (1);
+	}
+	return (0);
 }

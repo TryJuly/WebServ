@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 08:36:43 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/11 13:53:54 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/16 11:59:31 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -450,7 +450,7 @@ static void	ServerPart(std::vector<std::string> &serverBloc, ConfigServer &confi
 			case 's':
 				break ;
 			default:
-				throw (std::invalid_argument("Error: Invalide syntax line: " + serverBloc[i]));
+				throw (std::invalid_argument("Error: Invalid syntax line: " + serverBloc[i]));
 				break ;
 			}
 	}
