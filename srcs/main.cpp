@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 17:15:09 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/16 11:57:40 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/16 13:26:15 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@ int	main(int ac, char **av)
 		if (ac > 2)
 			throw (std::invalid_argument("Error: Too many arguments."));
 		Server server(ac, av);
-		// server.StartServer();
+		server.StartServer();
 	}
 	catch(const std::exception& e) {
 		std::cerr << RED << e.what() << RESET << std::endl;

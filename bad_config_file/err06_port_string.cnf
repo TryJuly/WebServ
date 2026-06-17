@@ -1,0 +1,17 @@
+# ERREUR : la valeur de 'listen' est une chaine de caracteres, pas un entier
+# "localhost" n'est pas un numero de port valide.
+
+server {
+    listen localhost;
+    server_name localhost;
+    root ./var/www/html;
+    index index.html;
+    client_max_body_size 1048576;
+
+    error_page 404 ./var/www/errors/404.html;
+
+    location / {
+        methods GET;
+        autoindex off;
+    }
+}

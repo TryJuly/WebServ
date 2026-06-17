@@ -1,0 +1,23 @@
+# ERREUR : client_max_body_size avec une valeur negative
+# Une taille ne peut pas etre negative — le parser doit le rejeter.
+
+server {
+    listen 8080;
+    server_name localhost;
+    root ./var/www/html;
+    index index.html;
+    client_max_body_size -1024;
+
+    error_page 404 ./var/www/errors/404.html;
+
+    location / {
+        methods GET;
+        autoindex off;
+    }
+
+    location /uploads {
+        methods GET POST;
+        autoindex off;
+        upload_path ./var/www;
+    }
+}

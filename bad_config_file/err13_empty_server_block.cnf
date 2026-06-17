@@ -1,0 +1,5 @@
+# ERREUR : bloc server completement vide
+# Un server {} sans aucune directive est invalide (pas de listen, pas de root...).
+
+server {
+}

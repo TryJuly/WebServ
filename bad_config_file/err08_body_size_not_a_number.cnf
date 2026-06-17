@@ -1,0 +1,17 @@
+# ERREUR : client_max_body_size avec une valeur non numerique
+# "unlimited" n'est pas un entier — le parser doit rejeter ca.
+
+server {
+    listen 8080;
+    server_name localhost;
+    root ./var/www/html;
+    index index.html;
+    client_max_body_size unlimited;
+
+    error_page 404 ./var/www/errors/404.html;
+
+    location / {
+        methods GET;
+        autoindex off;
+    }
+}

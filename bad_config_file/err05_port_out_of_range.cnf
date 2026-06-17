@@ -1,0 +1,17 @@
+# ERREUR : port hors plage valide (0-65535)
+# 99999 depasse la limite — le parser doit rejeter cette valeur.
+
+server {
+    listen 99999;
+    server_name localhost;
+    root ./var/www/html;
+    index index.html;
+    client_max_body_size 1048576;
+
+    error_page 404 ./var/www/errors/404.html;
+
+    location / {
+        methods GET;
+        autoindex off;
+    }
+}

@@ -1,0 +1,22 @@
+# ERREUR : methode HTTP non supportee dans 'methods'
+# PUT et PATCH ne font pas partie des methodes autorisees (GET POST DELETE).
+
+server {
+    listen 8080;
+    server_name localhost;
+    root ./var/www/html;
+    index index.html;
+    client_max_body_size 1048576;
+
+    error_page 404 ./var/www/errors/404.html;
+
+    location / {
+        methods GET PUT PATCH;
+        autoindex off;
+    }
+
+    location /uploads {
+        methods POST DELETE OPTIONS;
+        upload_path ./var/www;
+    }
+}
