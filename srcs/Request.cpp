@@ -23,10 +23,24 @@ Request& Request::operator=(const Request& other) {
 
 Request::~Request() {}
 
+void    Request::checkMethod(std::string& first_line) {
+    _method = first_line.substr(0, first_line.find(' '));
+    std::string list[6] = {"OPTIONS", "HEAD", "PUT", "CONNECT", "TRACE", "PATCH"};
+    std::vector<std::string> methods(list, list + 6);
+    for (unsigned int i = 0; i < methods.size(); i++) {
+        if (_method == methods[i])
+            throw std::runtime_error("405 Error: Method not implemented");
+    }
+    throw std::runtime_error("400 Error: Invalid Method");
+}
+
 Request::Request(std::string buff) {
 	_isCGI = false;
 
     std::string req = static_cast<std::string>(buff);
+    if (req == "\r\n\r\n")
+        throw std::runtime_error("400 Error: Empty Request");
+
     std::string first_line = req.substr(0, req.find_first_of('\n'));
     //std::cout << req << std::endl << std::endl;
     //method
@@ -39,11 +53,22 @@ Request::Request(std::string buff) {
     else if (first_line.find("DELETE") != first_line.npos) {
         _method = first_line.substr(0, 6);
     }
+    else
+        checkMethod(first_line);
     //path
-    _path = first_line.substr(first_line.find_first_of('/'), first_line.find_last_of(' ') - (first_line.find_first_of('/')));
+    if (first_line.find_first_of('/') != std::string::npos)
+        _path = first_line.substr(first_line.find_first_of('/'), first_line.find_last_of(' ') - (first_line.find_first_of('/')));
+    else
+        throw std::runtime_error("400 Error: No Path");
+    //std::cout << _path << " <-- just here" << std::endl;
 
     //headers
     fillHeaders(req);
+    if (_headers.find("Host") == _headers.end()) {
+        throw (std::runtime_error("400 Error: No Host"));
+    }
+    else if (_headers.find("Host")->second == "")
+        throw (std::runtime_error("400 Error: No Host"));
 
 	//	CGI Check
     size_t  pos = _path.find_last_of('.');

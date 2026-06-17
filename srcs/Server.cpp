@@ -368,10 +368,10 @@ void	Server::CheckTimeoutClient( void )
 			k--;
 			continue ;
 		}
-		if (_client[k].GetIsCgi() == true)
-			std::cout << "checking timeout: " << _client[k].GetIsCgi() << " diff: " << std::time(NULL) - _client[k].GetTime() << std::endl;
-		else
-			std::cout << "checking cgi timeout" << " diff: " << std::time(NULL) - _client[k].GetTimeCgi() << std::endl;
+		//if (_client[k].GetIsCgi() == true)
+			//std::cout << "checking timeout: " << _client[k].GetIsCgi() << " diff: " << std::time(NULL) - _client[k].GetTime() << std::endl;
+		//else
+			//std::cout << "checking cgi timeout" << " diff: " << std::time(NULL) - _client[k].GetTimeCgi() << std::endl;
 		if (_client[k].GetIsCgi() && std::time(NULL) - _client[k].GetTimeCgi() > 10) {
 			int pipeFd = _client[k].GetPipeFd();
 			kill(_client[k].GetPidCgi(), SIGKILL);
@@ -418,15 +418,15 @@ static std::string	SendErrorPage(ConfigServer &serverConfig, int errorNumber)
 
 	switch (errorNumber) {
 	case 400:
-		status = "HTTP/1.1 500 Internal Server Error\r\n";
+		status = "HTTP/1.1 400 Bad Request\r\n";
 		response = status + paste;
 		break;
 	case 401:
-		status = "HTTP/1.1 500 Internal Server Error\r\n";
+		status = "HTTP/1.1 401 Unauthorized\r\n";
 		response = status + paste;
 		break;
 	case 403:
-		status = "HTTP/1.1 500 Internal Server Error\r\n";
+		status = "HTTP/1.1 403 Forbidden\r\n";
 		response = status + paste;
 		break;
 	case 404:
@@ -442,15 +442,15 @@ static std::string	SendErrorPage(ConfigServer &serverConfig, int errorNumber)
 		response = status + paste;
 		break;
 	case 502:
-		status = "HTTP/1.1 500 Internal Server Error\r\n";
+		status = "HTTP/1.1 502 Bad Gateway\r\n";
 		response = status + paste;
 		break;
 	case 503:
-		status = "HTTP/1.1 500 Internal Server Error\r\n";
+		status = "HTTP/1.1 503 Service Unavailable\r\n";
 		response = status + paste;
 		break;
 	case 504:
-		status = "HTTP/1.1 500 Internal Server Error\r\n";
+		status = "HTTP/1.1 504 Gateway Timeout\r\n";
 		response = status + paste;
 		break;
 

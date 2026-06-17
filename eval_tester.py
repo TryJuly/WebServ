@@ -464,8 +464,7 @@ def test_methods():
     try:
         r = POST("/uploads",
                  data=b"Fichier eval test upload raw\n",
-                 headers={"Content-Type": "application/octet-stream",
-                          "X-Filename": "eval_raw.txt"})
+                 headers={"Content-Type": "multipart/form-data"})
         check("POST /uploads (raw)  → 2xx",
               r.status_code in (200, 201, 204),
               detail=f"Attendu : 2xx | Reçu : {r.status_code}")
@@ -576,7 +575,7 @@ def test_body_size():
     try:
         body = b"A" * (1024 * 1024)
         r = POST("/uploads", data=body,
-                 headers={"Content-Type": "application/octet-stream"})
+                 headers={"Content-Type": "multipart/form-data"})
         info(f"POST exactement 1 MB  → {r.status_code}")
         check("POST 1 MB exact  → 2xx",
               r.status_code in (200, 201, 204),
@@ -589,7 +588,7 @@ def test_body_size():
     try:
         body = b"B" * (1024 * 1024 + 1)
         r = POST("/uploads", data=body,
-                 headers={"Content-Type": "application/octet-stream"})
+                 headers={"Content-Type": "multipart/form-data"})
         passed = check_r("POST 1 MB + 1 octet  → 413", r, 413)
         if passed:
             check("  page 413 en HTML", "<html" in r.text.lower(),
@@ -612,7 +611,7 @@ def test_body_size():
     if not check_server_still_up(): return
     try:
         r = POST("/uploads", data=b"",
-                 headers={"Content-Type": "application/octet-stream"})
+                 headers={"Content-Type": "multipart/form-data"})
         info(f"POST vide  → {r.status_code}  (pas de crash attendu)")
         check("POST vide  → pas de 5xx",
               r.status_code < 500,
