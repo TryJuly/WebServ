@@ -2,6 +2,7 @@
 # define REQUEST_HPP
 
 #include <map>
+#include <vector>
 #include <iostream>
 
 class Request {
@@ -14,6 +15,7 @@ class Request {
         std::string _body;
         bool	_isCGI;
         void    fillHeaders(std::string req);
+        void    checkMethod(std::string& first_line);
 
     public:
 

@@ -36,6 +36,7 @@ Response::Response( Request& req, ConfigServer& config) {
     }
     //OTHERS
     else {
+        sendError(405, config);
         // Bad request 400 ou Method not allowed 405 ?
     }
 }
