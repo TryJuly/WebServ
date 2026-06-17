@@ -1,0 +1,20 @@
+# ERREUR : directive inconnue dans le bloc server
+# "timeout" n'existe pas dans la grammaire du webserv.
+# Le parser doit signaler une directive non reconnue.
+
+server {
+    listen 8080;
+    server_name localhost;
+    root ./var/www/html;
+    index index.html;
+    client_max_body_size 1048576;
+    timeout 30;
+
+    error_page 404 ./var/www/errors/404.html;
+
+    location / {
+        methods GET;
+        autoindex off;
+        keepalive on;
+    }
+}

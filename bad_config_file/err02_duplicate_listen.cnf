@@ -1,0 +1,16 @@
+# ERREUR : directive 'listen' presente deux fois dans le meme bloc server
+# Un server ne peut avoir qu'un seul port d'ecoute.
+
+server {
+    listen 8080;
+    listen 9090;
+    server_name localhost;
+    root ./var/www/html;
+    index index.html;
+    client_max_body_size 1048576;
+
+    location / {
+        methods GET;
+        autoindex off;
+    }
+}

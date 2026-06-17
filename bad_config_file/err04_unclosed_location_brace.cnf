@@ -1,0 +1,16 @@
+# ERREUR : accolade ouvrante du bloc location jamais fermee
+# Le parser doit detecter le bloc location non ferme.
+
+server {
+    listen 8080;
+    server_name localhost;
+    root ./var/www/html;
+    index index.html;
+    client_max_body_size 1048576;
+
+    location / {
+        methods GET;
+        autoindex off;
+
+    # accolade fermante de la location manquante — celle du server ferme les deux ?
+}

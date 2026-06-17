@@ -1,0 +1,28 @@
+# ERREUR : code de redirection invalide
+# 200 n'est pas un code de redirection (doit etre 3xx : 301, 302, etc.).
+
+server {
+    listen 8080;
+    server_name localhost;
+    root ./var/www/html;
+    index index.html;
+    client_max_body_size 1048576;
+
+    error_page 404 ./var/www/errors/404.html;
+
+    location / {
+        methods GET;
+        autoindex off;
+    }
+
+    location /old {
+        methods GET;
+        root ./var/www;
+        redirect 200 /new;
+    }
+
+    location /broken {
+        methods GET;
+        redirect 999 /somewhere;
+    }
+}

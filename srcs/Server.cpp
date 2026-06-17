@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 14:38:06 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/16 12:02:53 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/16 15:04:31 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -285,6 +285,8 @@ void	Server::HandleCgiRequest(ConfigServer &config, Request const &req, int inde
 		throw (std::runtime_error("405 Error:"));
 }
 
+// void	AddCookieSession(std::string &str);
+
 void	Server::CatchClientRequest(int i, int &NbClient)
 {
 	int indexClient = GetIndexClient(_fds[i].fd);
@@ -317,6 +319,8 @@ void	Server::CatchClientRequest(int i, int &NbClient)
 			else {
 				Response rep(req, config);
 				std::string response = rep.printResponse();
+				// AddCookieSession(response);
+				// std::cout << RED << " Debug: " << response << RESET << std::endl;
 				write(_client[indexClient].GetFd(), response.c_str(), response.size());
 			}
 			_client[indexClient].ResetRequest();
@@ -333,6 +337,19 @@ void	Server::CatchClientRequest(int i, int &NbClient)
 		_client[indexClient].ResetRequest();
 	}
 }
+
+// void	AddCookieSession(std::string &str)
+// {
+// 	std::string cookie = "Set-Cookie: sessionId=123AER456789;\r\n";
+// 	size_t	pos = str.find("\n");
+// 	std::string result = str.substr(pos + 1);
+// 	result = cookie + result;
+// 	result = str.substr(0, pos + 1) + result;
+// 	// std::cout << GREEN << result << RESET << std::endl;
+// 	str = result;
+// 	// std::cout << RED << str << RESET << std::cout;
+// 	return ;
+// }
 
 void	Server::CheckTimeoutClient( void )
 {
@@ -352,7 +369,7 @@ void	Server::CheckTimeoutClient( void )
 			continue ;
 		}
 		if (_client[k].GetIsCgi() == true)
-			std::cout << "checking cgi timeout, isCgi: " << _client[k].GetIsCgi() << " diff: " << std::time(NULL) - _client[k].GetTimeCgi() << std::endl;
+			std::cout << "checking timeout: " << _client[k].GetIsCgi() << " diff: " << std::time(NULL) - _client[k].GetTime() << std::endl;
 		else
 			std::cout << "checking cgi timeout" << " diff: " << std::time(NULL) - _client[k].GetTimeCgi() << std::endl;
 		if (_client[k].GetIsCgi() && std::time(NULL) - _client[k].GetTimeCgi() > 10) {

@@ -1,0 +1,30 @@
+# ERREUR : deux blocs server sur le meme port avec le meme server_name
+# Conflit d'identite — le serveur ne peut pas distinguer les deux.
+
+server {
+    listen 8080;
+    server_name localhost;
+    root ./var/www/html;
+    index index.html;
+    client_max_body_size 1048576;
+
+    error_page 404 ./var/www/errors/404.html;
+
+    location / {
+        methods GET;
+        autoindex off;
+    }
+}
+
+server {
+    listen 8080;
+    server_name localhost;
+    root ./var/www;
+    index index.html;
+    client_max_body_size 512;
+
+    location / {
+        methods GET POST;
+        autoindex on;
+    }
+}
