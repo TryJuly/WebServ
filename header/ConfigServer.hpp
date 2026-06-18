@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/25 12:51:30 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/09 14:19:27 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/18 15:31:26 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,6 +50,7 @@ class ConfigServer
 		ConfigLocation&	GetConfigLocation(int index);
 		sockaddr_in&	GetSockAddr(void);
 		int	GetNumberLocation(void);
+		std::string	GetPortStr( void );
 
 		void	FillConfigServer(std::vector<std::string> &serverChunk);
 		void	SetConfigServer(std::string &str, char iD);
@@ -59,6 +60,7 @@ class ConfigServer
 
 		void	SetPort(int port);
 		void	SetSocket(int socket);
+		void	SetPortStr(std::string port);
 		void	SetMaxBodySize(int BodySize);
 		void	SetRoot(std::string const &rootPath);
 		void	SetIndex(std::string const &index);
@@ -71,6 +73,7 @@ class ConfigServer
 		int	_socket;
 		int	_maxBodySize;
 		int	_numberLocation;
+		std::string	_portStr;
 		std::string	_index;
 		std::string	_rootPath;
 		std::string	_serverName;

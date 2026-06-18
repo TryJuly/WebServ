@@ -13,6 +13,8 @@
 #include <string>
 #include <cstdio>
 #include <ctime>
+#include <dirent.h>   // directory
+#include <sys/types.h>
 
 class Response {
 
@@ -29,6 +31,7 @@ class Response {
         void    sendLocIndex(ConfigServer& config, ConfigLocation& loc);
         void    multipart(std::map<std::string, std::string>::iterator c_type, Request& req, ConfigServer& config, std::string upload_path);
         void    octetStream(Request& req, ConfigServer& config, std::string upload_path);
+        void    autoIndex(ConfigServer& config, ConfigLocation& loc);
 
 
     public:
