@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CGI.hpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
+/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/02 15:37:00 by seully            #+#    #+#             */
-/*   Updated: 2026/06/12 20:14:39 by seully           ###   ########.fr       */
+/*   Updated: 2026/06/18 10:41:06 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,6 +49,7 @@ class CGI
 		void	ParseHeaders(std::string const &request);
 		void	SetEnvpCGI(ConfigLocation const &config);
 		void	SetTimeStart(std::time_t time);
+		ssize_t	GetBodySize( void );
 
 		void	LaunchCGI(ConfigLocation const &config);
 

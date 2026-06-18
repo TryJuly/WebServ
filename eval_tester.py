@@ -1021,6 +1021,62 @@ def test_siege():
         fail("Le serveur ne répond plus après le stress test")
 
 # ═════════════════════════════════════════════════════════════════════════════
+# MENU INTERACTIF
+# ═════════════════════════════════════════════════════════════════════════════
+_MENU_ITEMS = [
+    (1,  "① Protocole HTTP/1.1"),
+    (2,  "② Fichiers statiques & MIME types"),
+    (3,  "③ Autoindex"),
+    (4,  "④ Méthodes HTTP  (GET/POST/DELETE)"),
+    (5,  "⑤ Pages d'erreur personnalisées"),
+    (6,  "⑥ Body size limit"),
+    (7,  "⑦ Redirections"),
+    (8,  "⑧ CGI"),
+    (9,  "⑨ Cycle upload"),
+    (10, "⑩ Virtual hosting"),
+    (11, "⑪ Keep-Alive"),
+    (12, "⑫ Stress test"),
+]
+
+def ask_menu():
+    print(f"\n  {BOLD}Quelle(s) partie(s) veux-tu tester ?{RESET}\n")
+    for num, label in _MENU_ITEMS:
+        print(f"  {CYAN}[{num:2d}]{RESET} {label}")
+    print(f"  {CYAN}[ 0]{RESET} Tout tester  {DIM}(défaut){RESET}")
+    print()
+
+    while True:
+        try:
+            raw = input(f"  {BOLD}Choix (ex: 8  ou  1 4 8) :{RESET} ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print()
+            raw = ""
+
+        if raw == "" or raw == "0":
+            return set(range(1, 13))
+
+        tokens = raw.split()
+        valid = set()
+        bad   = []
+        for tok in tokens:
+            if tok.isdigit() and 1 <= int(tok) <= 12:
+                valid.add(int(tok))
+            else:
+                bad.append(tok)
+
+        if bad:
+            print(f"  {YELLOW}Valeur(s) invalide(s) : {' '.join(bad)}"
+                  f"  —  utilise des chiffres entre 1 et 12, ou 0 pour tout.{RESET}\n")
+            continue
+
+        if valid:
+            return valid
+
+        print(f"  {YELLOW}Aucun choix reconnu — lancement de tous les tests.{RESET}\n")
+        return set(range(1, 13))
+
+
+# ═════════════════════════════════════════════════════════════════════════════
 # MAIN
 # ═════════════════════════════════════════════════════════════════════════════
 def main():
@@ -1029,6 +1085,13 @@ def main():
     print(f"{BOLD}{CYAN}  WEBSERV EVAL TESTER — École 42{RESET}")
     print(f"{BOLD}{CYAN}  {datetime.now().strftime('%Y-%m-%d  %H:%M:%S')}{RESET}")
     print(f"{BOLD}{CYAN}{bar}{RESET}")
+
+    selection    = ask_menu()
+    all_selected = (selection == set(range(1, 13)))
+
+    if not all_selected:
+        labels = [label for num, label in _MENU_ITEMS if num in selection]
+        print(f"\n  {DIM}Tests sélectionnés : {', '.join(labels)}{RESET}")
 
     print(f"\n{BOLD}Vérification des serveurs…{RESET}")
     up8080 = server_up(PORT_8080)
@@ -1059,23 +1122,27 @@ def main():
     except Exception:
         pass
 
-    print(f"\n{DIM}Préparation des fichiers de test…{RESET}")
-    setup()
+    # setup() uniquement si des tests qui utilisent les fichiers sont sélectionnés
+    needs_files = bool(selection & {2, 4, 9, 12})
+    if needs_files:
+        print(f"\n{DIM}Préparation des fichiers de test…{RESET}")
+        setup()
 
-    test_http_protocol()
-    test_static_files()
-    test_autoindex()
-    test_methods()
-    test_error_pages()
-    test_body_size()
-    test_redirections()
-    test_cgi()
-    test_upload_cycle()
-    test_virtual_host()
-    test_keepalive()
-    test_siege()
+    if 1  in selection: test_http_protocol()
+    if 2  in selection: test_static_files()
+    if 3  in selection: test_autoindex()
+    if 4  in selection: test_methods()
+    if 5  in selection: test_error_pages()
+    if 6  in selection: test_body_size()
+    if 7  in selection: test_redirections()
+    if 8  in selection: test_cgi()
+    if 9  in selection: test_upload_cycle()
+    if 10 in selection: test_virtual_host()
+    if 11 in selection: test_keepalive()
+    if 12 in selection: test_siege()
 
-    cleanup()
+    if needs_files:
+        cleanup()
 
     total = _passed + _failed + _errors
     pct   = (_passed * 100 // total) if total else 0
