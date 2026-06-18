@@ -116,30 +116,7 @@ void Response::sendLocIndex(ConfigServer& config, ConfigLocation& loc) {
     _body = extract_file(f_path);
 }
 
-void Response::postResponse(Request& req, ConfigServer& config) {
-    std::string path = req.getPath();
-
-    int index_location = loc_index(path, config);
-
-    if (index_location < 0) {
-        sendError(404, config);
-        return;
-    }
-    else if (config.GetConfigLocation(index_location).GetBoolPost() != 1) {
-        sendError(405, config);
-        return ;
-    }
-
-    ConfigLocation loc = config.GetConfigLocation(index_location);
-    std::string upload_path = loc.GetUpload();
-
-    std::map<std::string, std::string> req_head = req.getHeaders();
-    std::map<std::string, std::string>::iterator c_type = req_head.find("Content-Type");
-    
-    if (c_type->second.find("multipart/form-data") == std::string::npos){
-        std::cout << "Cava pas etrre possible" << std::endl;
-        return ; //Error
-}
+void Response::multipart(std::map<std::string, std::string>::iterator c_type, Request& req, ConfigServer& config, std::string upload_path) {
     std::string delimiter = c_type->second.substr(c_type->second.find("boundary=") + 9);
 
     std::string req_body = req.getBody();
@@ -180,6 +157,62 @@ void Response::postResponse(Request& req, ConfigServer& config) {
     _status = "HTTP/1.1 201 Created\r\n";
     std::pair<std::string, std::string> type("Content-Type:", "*/*");
     _headers.insert(type);
+}
+// mettre dans utils 
+std::string generateTimestamp() {
+    std::ostringstream time;
+    time << std::time(NULL);
+    return (time.str());
+}
+
+void Response::octetStream(Request& req, ConfigServer& config, std::string upload_path) {
+    std::string file = generateTimestamp();
+    std::string f_path = upload_path + "/" + file;
+    
+    struct stat sb;
+    if (stat(f_path.c_str(), &sb) == 0) {
+        std::cout << "a file with this name already exists" << std::endl;
+        sendError(409, config);
+        return ;
+    }
+
+    std::ofstream ofs(f_path.c_str());
+    
+    _body = req.getBody();
+    ofs << _body;
+    _status = "HTTP/1.1 201 Created\r\n";
+    std::pair<std::string, std::string> type("Content-Type:", "*/*");
+    _headers.insert(type);
+}
+
+void Response::postResponse(Request& req, ConfigServer& config) {
+    std::string path = req.getPath();
+
+    int index_location = loc_index(path, config);
+
+    if (index_location < 0) {
+        sendError(404, config);
+        return;
+    }
+    else if (config.GetConfigLocation(index_location).GetBoolPost() != 1) {
+        sendError(405, config);
+        return ;
+    }
+
+    ConfigLocation loc = config.GetConfigLocation(index_location);
+    std::string upload_path = loc.GetUpload();
+
+    std::map<std::string, std::string> req_head = req.getHeaders();
+    std::map<std::string, std::string>::iterator c_type = req_head.find("Content-Type");
+    
+    if (c_type->second == "multipart/form-data") {
+        multipart(c_type, req, config, upload_path);
+    }
+    else if (c_type->second == "application/octet-stream") {
+        octetStream(req, config, upload_path);
+    }
+    else
+        throw std::runtime_error("415 ");
 }
 
 void Response::deleteResponse(Request& req, ConfigServer& config) {
@@ -230,6 +263,10 @@ std::string Response::getStatus(void) const {
 void Response::setStatus(std::string status) {
     std::cout << status << std::endl;
     return;
+}
+
+std::string Response::getBody(void) const {
+    return (_body);
 }
 
 std::string Response::printResponse(void) {

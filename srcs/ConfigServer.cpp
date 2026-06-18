@@ -57,6 +57,18 @@ ConfigServer::ConfigServer()
 		throw (std::invalid_argument("Error: Invalid path : ./var/www/errors/405.html"));
 	_errorPages.insert(std::pair<int, std::string>(405, "./var/www/errors/405.html"));
 
+	if (stat("./var/www/errors/409.html", &st) != 0)
+		throw (std::invalid_argument("Error: Invalid path : ./var/www/errors/409.html"));
+	_errorPages.insert(std::pair<int, std::string>(409, "./var/www/errors/409.html"));
+
+	if (stat("./var/www/errors/413.html", &st) != 0)
+		throw (std::invalid_argument("Error: Invalid path : ./var/www/errors/413.html"));
+	_errorPages.insert(std::pair<int, std::string>(413, "./var/www/errors/413.html"));
+
+	if (stat("./var/www/errors/415.html", &st) != 0)
+		throw (std::invalid_argument("Error: Invalid path : ./var/www/errors/415.html"));
+	_errorPages.insert(std::pair<int, std::string>(415, "./var/www/errors/415.html"));
+
 	if (stat("./var/www/errors/500.html", &st) != 0)
 		throw (std::invalid_argument("Error: Invalid path : ./var/www/errors/500.html"));
 	_errorPages.insert(std::pair<int, std::string>(500, "./var/www/errors/500.html"));
