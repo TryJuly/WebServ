@@ -341,7 +341,7 @@ void	Server::CatchClientRequest(int i, int &NbClient)
 			_fds.erase(_fds.begin() + i);
 			_client.erase(_client.begin() + indexClient);
 			i--;
-			NbClient--;
+		 	NbClient--;
 		}
 		else {
 			buff[bytes] = '\0';
@@ -364,6 +364,7 @@ void	Server::CatchClientRequest(int i, int &NbClient)
 				std::string response = rep.printResponse();
 				// AddCookieSession(response);
 				write(_client[indexClient].GetFd(), response.c_str(), response.size());
+				std::cout << _client[indexClient].GetFd() << std::endl;
 			}
 			_client[indexClient].ResetRequest();
 		}

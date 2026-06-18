@@ -464,7 +464,7 @@ def test_methods():
     try:
         r = POST("/uploads",
                  data=b"Fichier eval test upload raw\n",
-                 headers={"Content-Type": "multipart/form-data"})
+                 headers={"Content-Type": "application/octet-stream"})
         check("POST /uploads (raw)  → 2xx",
               r.status_code in (200, 201, 204),
               detail=f"Attendu : 2xx | Reçu : {r.status_code}")
@@ -575,7 +575,7 @@ def test_body_size():
     try:
         body = b"A" * (1024 * 1024)
         r = POST("/uploads", data=body,
-                 headers={"Content-Type": "multipart/form-data"})
+                 headers={"Content-Type": "application/octet-stream"})
         info(f"POST exactement 1 MB  → {r.status_code}")
         check("POST 1 MB exact  → 2xx",
               r.status_code in (200, 201, 204),
@@ -611,7 +611,7 @@ def test_body_size():
     if not check_server_still_up(): return
     try:
         r = POST("/uploads", data=b"",
-                 headers={"Content-Type": "multipart/form-data"})
+                 headers={"Content-Type": "application/octet-stream"})
         info(f"POST vide  → {r.status_code}  (pas de crash attendu)")
         check("POST vide  → pas de 5xx",
               r.status_code < 500,
@@ -777,7 +777,7 @@ def test_upload_cycle():
     try:
         content = b"Contenu eval upload cycle " + str(t_before).encode() + b"\n"
         r = POST("/uploads", data=content,
-                 headers={"Content-Type": "text/plain",
+                 headers={"Content-Type": "application/octet-stream",
                           "X-Filename": "eval_cycle.txt"})
         check("POST /uploads  → 2xx",
               r.status_code in (200, 201, 204),
