@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 17:15:09 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/16 13:26:15 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/18 10:31:48 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,7 @@ int	main(int ac, char **av)
 	}
 	catch(const std::exception& e) {
 		std::cerr << RED << e.what() << RESET << std::endl;
+		std::cout << GREEN << "###	FINISH	###" << RESET << std::endl;
 		return (1);
 	}
 	std::cout << GREEN << "###	FINISH	###" << RESET << std::endl;

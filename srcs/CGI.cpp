@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/02 15:35:11 by seully            #+#    #+#             */
-/*   Updated: 2026/06/16 09:52:24 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/18 10:41:01 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,16 +18,32 @@ static std::string	UrlDecode(std::string const &url);
 CGI::CGI()
 { return ; }
 
+bool ValidMethode(std::string method)
+{
+	if (method == "GET")
+		return (true);
+	if (method == "POST")
+		return (true);
+	if (method == "DELETE")
+		return (true);
+	if (method == "PATCH")
+		return (true);
+	if (method == "PUT")
+		return (true);
+	if (method == "HEAD")
+		return (true);
+	return (false);
+}
+
 CGI::CGI(std::string const &request)
 {
 	_envp = NULL;
 	ParseFirstLine(request);
-	// Parse headers
 	ParseHeaders(request);
 
 	std::map<std::string, std::string>::iterator	it = _stock.find("Methode");
 
-	if (it == _stock.end() || (it->second != "GET" && it->second != "POST"))
+	if (it == _stock.end() || ValidMethode(it->second) == false)
 		throw (std::invalid_argument("400 Error: Invalid HTTP request"));
 
 	if (it->second == "POST") {
@@ -76,7 +92,8 @@ CGI::CGI(std::string const &request)
 		else
 			throw (std::invalid_argument("405 Error: Invalid HTTP request"));
 	}
-	// std::cout << RED << "HERE4" << RESET << std::endl;
+	else if (it->second != "GET" && it->second != "POST")
+			throw (std::invalid_argument("405 Error: Invalid HTTP request"));
 	return ;
 }
 
@@ -148,7 +165,7 @@ void	CGI::SetEnvpCGI(ConfigLocation const &config)
 	else if (it->second == "POST" && config.GetBoolPost() == false)
 		throw (std::runtime_error("405 Error: Methode not allowed"));
 
-	_envp = new char*[_stock.size() + 1];
+	_envp = new char*[_stock.size() + 2];
 
 	int i = 0;
 	for (std::map<std::string, std::string>::iterator it = _stock.begin(); it != _stock.end(); it++) {
@@ -159,6 +176,9 @@ void	CGI::SetEnvpCGI(ConfigLocation const &config)
 		std::strcpy(_envp[i], input.c_str());
 		i++;
 	}
+	std::string input = "GATEWAY_INTERFACE=CGI/1.1";
+	_envp[i] = new char[input.size() + 1];
+	std::strcpy(_envp[i++], input.c_str());
 	_envp[i] = NULL;
 
 	_scriptPath = config.GetRoot() + _stock["Path"];	// Path exec CGI /usr/bin/python3
@@ -174,14 +194,14 @@ void	CGI::SetEnvpCGI(ConfigLocation const &config)
 static	std::string	SetEnvpVarName(std::string str)
 {
 	if (!str.compare("Methode"))
-		return (std::string("REQUEST_METHODE"));
+		return (std::string("REQUEST_METHOD"));
 	else if (!str.compare("Query"))
 		return (std::string("QUERY_STRING"));
 	else if (!str.compare("Path"))
 		return (std::string("PATH_INFO"));
 	else if (!str.compare("Content-Length"))
 		return (std::string("CONTENT_LENGTH"));
-	else if (!str.compare("Content-type"))
+	else if (!str.compare("Content-Type"))
 		return (std::string("CONTENT_TYPE"));
 	else if (!str.compare("Host"))
 		return (std::string("HTTP_HOST"));
@@ -232,6 +252,14 @@ CGI::CGI(CGI const &copy)
 {
 	(*this) = copy;
 	return ;
+}
+
+ssize_t	CGI::GetBodySize( void )
+{
+	std::map<std::string, std::string>::iterator it = _stock.find("Body");
+	if (it == _stock.end())
+		return (-1);
+	return (it->second.size());
 }
 
 CGI::~CGI()

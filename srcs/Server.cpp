@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 14:38:06 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/16 15:04:31 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/18 11:09:14 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,7 +84,7 @@ void Server::StartServer()
 	while (run) {
 		signal(SIGINT, signalHandler);
 		int nfds = _fds.size();
-		int nb = poll(&_fds[0], nfds , 5000);
+		int nb = poll(&_fds[0], nfds , 1000);
 		if (nb == -1)
 			throw (std::runtime_error("Error: Poll()." + std::string(strerror(errno))));
 		for (unsigned int i = 0; i < _fds.size(); i++) {
@@ -99,9 +99,9 @@ void Server::StartServer()
 				else
 					CatchClientRequest(i, _numberClient);
 			}
-			CheckTimeoutClient();
-			std::cout << "Nb Client is: " << _numberClient << std::endl;
 		}
+		CheckTimeoutClient();
+		std::cout << "Nb Client is: " << _numberClient << std::endl;
 	}
 	return ;
 }
@@ -113,6 +113,7 @@ void	Server::SetUpServer()
 		config.SetSocket(socket(AF_INET, SOCK_STREAM, 0));
 		if (config.GetSocket() == -1)
 			throw (std::runtime_error("Error: socket() failed: " + std::string(strerror(errno))));
+		fcntl(config.GetSocket(), F_SETFD, FD_CLOEXEC);
 		struct sockaddr_in	&sockAddr = config.GetSockAddr();
 		sockAddr.sin_family = AF_INET;
 		sockAddr.sin_port = htons(config.GetPort());
@@ -169,10 +170,14 @@ void	Server::AcceptClient(int fd, int idClient)
 {
 	int fdServer = FindIndexServerFD(*this, fd);
 	if (fdServer == -1)
-		throw (std::runtime_error("500 Error: Find FD serveur failed"));
+		return ;
+		// throw (std::runtime_error("500 Error: Find FD serveur failed"));
 	struct sockaddr_in	&clientAddr = _configServer[fdServer].GetSockAddr();
 	socklen_t addrLen = sizeof(clientAddr);
 	int socketClient = accept(fd, reinterpret_cast<struct sockaddr *>(&clientAddr), &addrLen);
+	if (socketClient == -1)
+		return ;
+	fcntl(socketClient, F_SETFD, FD_CLOEXEC);
 
 	struct pollfd clientPoll;
 	clientPoll.fd = socketClient;
@@ -201,10 +206,34 @@ bool	Server::IsCgiEvent(int fd)
 int	Server::GetClientByPipe(int fd)
 {
 	for (size_t	i = 0; i < _client.size(); i++) {
-		if (_client[i].GetPipeFd() == fd)
+		if (_client[i].GetIsCgi() == true && _client[i].GetPipeFd() == fd)
 			return (i);
 	}
 	return (-1);
+}
+
+static void	HelpCgiResponse(std::string &response)
+{
+	size_t	sep = response.find("\r\n\r\n");
+	size_t	offs = 4;
+	if (sep == std::string::npos) {
+		sep = response.find("\r\n");
+		offs = 2;
+	}
+	if (sep == std::string::npos) {
+		std::string length = return_file_length(response.size());
+		response = "Content-Length: " + length + "\r\n\r\n" + response;
+	}
+	else {
+		std::string	body = response.substr(sep + offs);
+		std::string length = return_file_length(body.size());
+		response = "Content-Length: " + length + "\r\n" + response;
+	}
+	if (response.substr(0, 5) != "HTTP/") {
+		std::string status = "HTTP/1.1 200 OK\r\n";
+		response = status + response;
+	}
+	return ;
 }
 
 void	Server::SendCgiResponse(int i)
@@ -214,49 +243,55 @@ void	Server::SendCgiResponse(int i)
 		return ;
 	char buff[1024];
 
-	int bytes = read(_client[indexClient].GetPipeFd(), buff, sizeof(buff) - 1);
-	if (bytes < 0)
-		throw (std::runtime_error("500 Error internal"));
-	if (bytes > 0) {
-		buff[bytes] = '\0';
-		_client[indexClient].AppendCgiResponse(buff, bytes);
+	try {
+		int bytes = read(_client[indexClient].GetPipeFd(), buff, sizeof(buff) - 1);
+		if (bytes < 0)
+			throw (std::runtime_error("500 Error internal"));
+		if (bytes > 0) {
+			buff[bytes] = '\0';
+			_client[indexClient].AppendCgiResponse(buff, bytes);
+		}
+		else if (bytes == 0) {
+			std::string response = _client[indexClient].GetCgiResponse();
+			HelpCgiResponse(response);
+			write(_client[indexClient].GetFd(), response.c_str(), response.size());
+			close(_fds[i].fd);
+			int status;
+			waitpid(_client[indexClient].GetPidCgi(), &status, WNOHANG);	// ADD
+			if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
+				_fds.erase(_fds.begin() + i);
+				_client[indexClient].SetIsCgi(false);
+				_client[indexClient].CleanCgiResponse();
+				_client[indexClient].ResetRequest();
+				throw (std::runtime_error("500 Error: Child Process"));
+			}
+			_fds.erase(_fds.begin() + i);
+			i--;
+			_client[indexClient].ResetRequest();
+			_client[indexClient].SetIsCgi(false);
+			_client[indexClient].CleanCgiResponse();
+			_client[indexClient].SetTime(std::time(NULL));
+		}
 	}
-	else if (bytes == 0) {
-		std::string response = _client[indexClient].GetCgiResponse();
-		size_t	sep = response.find("\r\n\r\n");
-		size_t	offs = 4;
-		if (sep == std::string::npos) {
-			sep = response.find("\r\n");
-			offs = 2;
-		}
-		if (sep == std::string::npos) {
-			std::string length = return_file_length(response.size());
-			response = "Content-Length: " + length + "\r\n\r\n" + response;
-		}
-		else {
-			std::string	body = response.substr(sep + offs);
-			std::string length = return_file_length(body.size());
-			response = "Content-Length: " + length + "\r\n" + response;
-		}
-		if (response.substr(0, 5) != "HTTP/") {
-			std::string status = "HTTP/1.1 200 OK\r\n";
-			response = status + response;
-		}
-		write(_client[indexClient].GetFd(), response.c_str(), response.size());
-		close(_fds[i].fd);
-		waitpid(_client[indexClient].GetPidCgi(), NULL, WNOHANG);	// ADD
-		_fds.erase(_fds.begin() + i);
-		i--;
-		_client[indexClient].SetIsCgi(false);
-		_client[indexClient].CleanCgiResponse();
+	catch (const std::exception& e) {
+		std::string handleError = e.what();
+		std::string stringError = handleError.substr(0, 3);
+		int error = std::strtol(stringError.c_str(), NULL, 10);
+		ConfigServer &config = _configServer[_client[indexClient].GetIndexConfigServer()];
+		std::string response = SendErrorPage(config, error);
+		write(_fds[i].fd, response.c_str(), response.size());
 		_client[indexClient].ResetRequest();
+		_client[indexClient].CleanCgiResponse();
 		_client[indexClient].SetTime(std::time(NULL));
 	}
+	return ;
 }
 
 void	Server::HandleCgiRequest(ConfigServer &config, Request const &req, int indexClient)
 {
 	CGI	process(_client[indexClient].GetRequest());
+	if (process.GetBodySize() > config.GetMaxBodySize())
+		throw (std::invalid_argument("413 Error: Body size limit"));
 	std::string path = req.getPath();
 	size_t	start = path.find('/');
 	size_t	end = path.find('/', start + 1);
@@ -283,6 +318,7 @@ void	Server::HandleCgiRequest(ConfigServer &config, Request const &req, int inde
 	}
 	else
 		throw (std::runtime_error("405 Error:"));
+	return ;
 }
 
 // void	AddCookieSession(std::string &str);
@@ -303,6 +339,7 @@ void	Server::CatchClientRequest(int i, int &NbClient)
 		if (bytes == 0) {
 			close(_client[indexClient].GetFd());
 			_fds.erase(_fds.begin() + i);
+			_client.erase(_client.begin() + indexClient);
 			i--;
 			NbClient--;
 		}
@@ -314,6 +351,8 @@ void	Server::CatchClientRequest(int i, int &NbClient)
 			std::cout << "###	Client Message:	###\n" << std::endl;
 			Request req(_client[indexClient].GetRequest());
 			std::cout << "###	End client message	###\n" << std::endl;
+			if (req.IsCGI() && req.getMethod() == "DELETE")
+				throw (std::invalid_argument("405 Error Method not allowed"));
 			if (req.getBody().size() > static_cast<unsigned int>(config.GetMaxBodySize()))
 				throw std::runtime_error("413 Error: Payload too large");
 			if (req.IsCGI() == true)
@@ -324,7 +363,6 @@ void	Server::CatchClientRequest(int i, int &NbClient)
 					throw std::runtime_error("413 Error: Payload too large");
 				std::string response = rep.printResponse();
 				// AddCookieSession(response);
-				// std::cout << RED << " Debug: " << response << RESET << std::endl;
 				write(_client[indexClient].GetFd(), response.c_str(), response.size());
 			}
 			_client[indexClient].ResetRequest();
@@ -339,6 +377,7 @@ void	Server::CatchClientRequest(int i, int &NbClient)
 		write(_fds[i].fd, response.c_str(), response.size());
 		_client[indexClient].CleanCgiResponse();
 		_client[indexClient].ResetRequest();
+		_client[indexClient].SetTime(std::time(NULL));
 	}
 }
 
@@ -364,6 +403,7 @@ void	Server::CheckTimeoutClient( void )
 				if (_fds[j].fd == fdClose) {
 					_fds.erase(_fds.begin() + j);
 					_numberClient--;
+					j--;
 					break ;
 				}
 			}
@@ -383,6 +423,7 @@ void	Server::CheckTimeoutClient( void )
 			for (size_t	i = 0; i < _fds.size(); i++) {
 				if (_fds[i].fd == pipeFd) {
 					_fds.erase(_fds.begin() + i);
+					i--;
 					break ;
 				}
 			}
@@ -523,6 +564,10 @@ Server::Server(Server const &copy)
 
 Server::~Server()
 {
+	for (size_t	i = 0; i < _fds.size(); i++) {
+		close(_fds[i].fd);
+	}
+	// for (size_t	i = 0; i < _fds.size(); i++)
 }
 
 Server &Server::operator=(Server const &copy)

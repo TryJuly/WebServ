@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 08:36:43 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/16 11:59:31 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/18 09:53:11 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -398,7 +398,7 @@ void	ConfigServer::SetConfigServer(std::string &str, char iD)
 		case 'C': {
 			char *endptr;
 			long size = std::strtol(value.c_str(), &endptr, 10);
-			if (*endptr != '\0' || size < 0)
+			if (*endptr != '\0' || size < 0 || size > 2147483647)
 				throw (std::invalid_argument("Error: Invalid port value: " + value));
 			SetMaxBodySize(size);
 			break ;

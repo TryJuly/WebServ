@@ -6,7 +6,7 @@
 /*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 13:12:35 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/15 20:55:52 by seully           ###   ########.fr       */
+/*   Updated: 2026/06/17 18:27:12 by seully           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,20 +18,24 @@
 Client::Client()
 {
 	_fd = -1;
-	// _ready = false;
-	// _remainingRead = 0;
-	_isCgi = false;
 	_pipeFd = -1;
 	_cgiPid = -1;
+	_isCgi = false;
 	_indexConfigServer = -1;
 	_time = std::time(NULL);
-	// _indexFdsStruct = -1;
+	_startCgi = std::time(NULL);
 	return ;
 }
 
 Client::Client(int fd)
 {
 	_fd = fd;
+	_pipeFd = -1;
+	_cgiPid = -1;
+	_isCgi = false;
+	_indexConfigServer = -1;
+	_time = std::time(NULL);
+	_startCgi = std::time(NULL);
 	return ;
 }
 
