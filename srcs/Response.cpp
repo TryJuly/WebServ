@@ -119,11 +119,14 @@ void Response::sendLocIndex(ConfigServer& config, ConfigLocation& loc) {
 void Response::multipart(std::map<std::string, std::string>::iterator c_type, Request& req, ConfigServer& config, std::string upload_path) {
     std::string delimiter = c_type->second.substr(c_type->second.find("boundary=") + 9);
 
+    std::cout << delimiter << std::endl;
+
     std::string req_body = req.getBody();
 
     if (req_body.find("--" + delimiter) == std::string::npos)
         return ;//error
 
+    //get filename
     size_t line_start = req_body.find("Content-Disposition");
     std::string line = req_body.substr(line_start + 21, req_body.find("\n", line_start) - (line_start + 21));
     std::stringstream ss(line);
@@ -138,7 +141,7 @@ void Response::multipart(std::map<std::string, std::string>::iterator c_type, Re
         if (v[i].find("filename=\"") != std::string::npos)
             file = v[i].substr(v[i].find('=') + 2 , (v[i].size() - 2) - (v[i].find('=') + 2));
     }
-
+    //create file with filename
     std::string f_path = upload_path + "/" + file;
     
     struct stat sb;
@@ -156,7 +159,10 @@ void Response::multipart(std::map<std::string, std::string>::iterator c_type, Re
     ofs << _body;
     _status = "HTTP/1.1 201 Created\r\n";
     std::pair<std::string, std::string> type("Content-Type:", "*/*");
+    stat(f_path.c_str(), &sb);
+    std::pair<std::string, std::string> length("Content-Length:", return_file_length(sb.st_size));
     _headers.insert(type);
+    _headers.insert(length);
 }
 // mettre dans utils 
 std::string generateTimestamp() {
@@ -182,7 +188,10 @@ void Response::octetStream(Request& req, ConfigServer& config, std::string uploa
     ofs << _body;
     _status = "HTTP/1.1 201 Created\r\n";
     std::pair<std::string, std::string> type("Content-Type:", "*/*");
+    stat(f_path.c_str(), &sb);
+    std::pair<std::string, std::string> length("Content-Length:", return_file_length(sb.st_size));
     _headers.insert(type);
+    _headers.insert(length);
 }
 
 void Response::postResponse(Request& req, ConfigServer& config) {
@@ -205,7 +214,7 @@ void Response::postResponse(Request& req, ConfigServer& config) {
     std::map<std::string, std::string> req_head = req.getHeaders();
     std::map<std::string, std::string>::iterator c_type = req_head.find("Content-Type");
     
-    if (c_type->second == "multipart/form-data") {
+    if (c_type->second.find("multipart/form-data") != std::string::npos) {
         multipart(c_type, req, config, upload_path);
     }
     else if (c_type->second == "application/octet-stream") {
@@ -327,12 +336,6 @@ std::string extract_file(std::string filename) {
     }
     return (body);
 }
-
-// std::string return_file_length(size_t length) {
-//     std::ostringstream len;
-//     len << length;
-//     return (len.str());
-// }
 
 int loc_index(std::string path, ConfigServer& config) {
     int index_location = -1;
