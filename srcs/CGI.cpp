@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/02 15:35:11 by seully            #+#    #+#             */
-/*   Updated: 2026/06/18 10:41:01 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/18 11:37:48 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,13 @@ bool ValidMethode(std::string method)
 		return (true);
 	if (method == "PUT")
 		return (true);
+	if (method == "OPTIONS")
+		return (true);
 	if (method == "HEAD")
+		return (true);
+	if (method == "CONNECT")
+		return (true);
+	if (method == "TRACE")
 		return (true);
 	return (false);
 }

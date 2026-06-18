@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 08:36:43 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/18 09:53:11 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/18 15:32:20 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,9 +24,9 @@ static void	FillConfigLocation(ConfigLocation &config, std::vector<std::string> 
 ConfigServer::ConfigServer()
 {
 	struct stat	st;
-	_port = 8080;
+	_port = -1;
 	_socket = -1;
-	_maxBodySize = 1048576;
+	_maxBodySize = -1;
 	
 	if (stat("./var/www", &st) != 0)
 		throw (std::invalid_argument("Error: Invalid path : ./var/www"));
@@ -365,6 +365,15 @@ void	ConfigServer::SetConfigLocation(ConfigLocation const &config)
 	return ;
 }
 
+void	ConfigServer::SetPortStr(std::string port)
+{
+	_portStr = port;
+	return ;
+}
+
+std::string	ConfigServer::GetPortStr( void )
+{ return (_portStr); }
+
 void	ConfigServer::SetConfigServer(std::string &str, char iD)
 {
 	size_t	start = str.find_first_of(" \t");
@@ -384,6 +393,7 @@ void	ConfigServer::SetConfigServer(std::string &str, char iD)
 			if (*endptr != '\0' || port < 0 || port > 65535)
 				throw (std::invalid_argument("Error: Invalid port value: " + value));
 			SetPort(port);
+			SetPortStr(value);
 			break ;
 		}
 		case 'S':

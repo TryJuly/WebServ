@@ -81,8 +81,10 @@ void Response::getResponse(Request& req, ConfigServer& config) {
         std::string f_path = root + path;
         struct stat sb;
         if (stat(f_path.c_str(), &sb) != 0 || S_ISDIR(sb.st_mode)) {
-            if (loc.GetAutoIndex())
-                sendIndex(config);
+            if (loc.GetAutoIndex()) {
+                autoIndex(config, loc);
+                // sendIndex(config);
+            }
             else if (loc.Getindex() != "") {
                 sendLocIndex(config, loc);
             }
@@ -237,6 +239,61 @@ void Response::deleteResponse(Request& req, ConfigServer& config) {
         return ;
     }
     _status = "HTTP/1.1 204 No Content\r\n";
+}
+
+
+std::string SetAutoIndexPage(std::string d_path, ConfigLocation& loc);
+
+void    Response::autoIndex(ConfigServer& config, ConfigLocation& loc)
+{
+    std::string d_path = loc.GetRoot() + loc.GetPath();
+    std::cout << d_path << std::endl;
+
+    struct stat sb;
+    if (stat(d_path.c_str(), &sb) != 0 && !S_ISDIR(sb.st_mode)) {
+        sendError(404, config);
+        return ;
+    }
+    std::string result = SetAutoIndexPage(d_path, loc);
+    if (result.empty())
+        throw (std::runtime_error("404 Error Dirread"));
+    _body = result;
+    _status = "HTTP/1.1 200 OK\r\n";
+    std::pair<std::string, std::string> type("Content-Type:", "*/*");
+    std::pair<std::string, std::string> length("Content-Length:", return_file_length(_body.size()));
+    _headers.insert(type);
+    _headers.insert(length);
+}
+
+std::string SetAutoIndexPage(std::string d_path, ConfigLocation& loc)
+{
+    std::string head = "<html>\n<head>\n\t<title>Index of " + loc.GetPath() + "</title>\n<head>\n";
+    std::string topBody = "<body>\n\t<h1>Index of " + loc.GetPath() + "</h1>\n\t<hr>\n\t<pre>\n";
+    std::string endBody = "\t\t</pre>\n\t<hr>\n</body>\n</html>\n";
+    std::vector<std::string>    href;
+    DIR *dir = opendir(d_path.c_str());
+    if (dir == NULL)
+        return (std::string());
+
+    struct dirent *dp;
+    while ((dp = readdir(dir)) != NULL) {
+        std::string name = dp->d_name;
+        if (dp->d_type == DT_REG) {
+            std::string line = "\t\t<a href=\"http://localhost:8080" + loc.GetPath() +  + "/" + name + "\">" + name + "</a>\n";
+            href.push_back(line);
+        }
+        // if (dp->d_type == DT_DIR)
+            // std::cout << "DIRECTORY" << std::endl;
+        // std::cout << "LENGTH: " << dp->d_reclen << std::endl;
+    }
+    closedir(dir);
+    std::string body = head + topBody;
+    for (size_t i = 0; i < href.size(); i++) {
+        body.append(href[i]);
+    }
+    body.append(endBody);
+    std::cout << body << std::endl;
+    return (body);
 }
 
 void Response::sendIndex(ConfigServer& config) {
