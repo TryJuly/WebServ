@@ -314,10 +314,14 @@ void	Server::CatchClientRequest(int i, int &NbClient)
 			std::cout << "###	Client Message:	###\n" << std::endl;
 			Request req(_client[indexClient].GetRequest());
 			std::cout << "###	End client message	###\n" << std::endl;
+			if (req.getBody().size() > static_cast<unsigned int>(config.GetMaxBodySize()))
+				throw std::runtime_error("413 Error: Payload too large");
 			if (req.IsCGI() == true)
 				HandleCgiRequest(config, req, indexClient);
 			else {
 				Response rep(req, config);
+				if (rep.getBody().size() > static_cast<unsigned int>(config.GetMaxBodySize()))
+					throw std::runtime_error("413 Error: Payload too large");
 				std::string response = rep.printResponse();
 				// AddCookieSession(response);
 				// std::cout << RED << " Debug: " << response << RESET << std::endl;
@@ -435,6 +439,18 @@ static std::string	SendErrorPage(ConfigServer &serverConfig, int errorNumber)
 		break;
 	case 405:
 		status = "HTTP/1.1 405 Methode Not Allowed\r\n";
+		response = status + paste;
+		break;
+	case 409:
+		status = "HTTP/1.1 409 Conflict\r\n";
+		response = status + paste;
+		break;
+	case 413:
+		status = "HTTP/1.1 413 Content Too Large\r\n";
+		response = status + paste;
+		break;
+	case 415:
+		status = "HTTP/1.1 415 Unsupported Media Type\r\n";
 		response = status + paste;
 		break;
 	case 500:

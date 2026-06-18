@@ -12,6 +12,7 @@
 #include <sstream>
 #include <string>
 #include <cstdio>
+#include <ctime>
 
 class Response {
 
@@ -26,6 +27,9 @@ class Response {
         void    sendIndex(ConfigServer& config);
         void    sendRedir(std::string path, ConfigServer& config, ConfigLocation& loc);
         void    sendLocIndex(ConfigServer& config, ConfigLocation& loc);
+        void    multipart(std::map<std::string, std::string>::iterator c_type, Request& req, ConfigServer& config, std::string upload_path);
+        void    octetStream(Request& req, ConfigServer& config, std::string upload_path);
+
 
     public:
 
@@ -37,6 +41,7 @@ class Response {
         Response( Request& req, ConfigServer& config);
         std::string getStatus(void) const;
         void setStatus(std::string status);
+        std::string getBody(void) const;
         std::string printResponse(void);
         void sendError(int status, ConfigServer& config);
 };
