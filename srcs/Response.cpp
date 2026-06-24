@@ -123,52 +123,69 @@ void Response::sendLocIndex(ConfigServer& config, ConfigLocation& loc) {
 }
 
 void Response::multipart(std::map<std::string, std::string>::iterator c_type, Request& req, ConfigServer& config, std::string upload_path) {
-    std::string delimiter = c_type->second.substr(c_type->second.find("boundary=") + 9);
-
-    std::cout << delimiter << std::endl;
+    std::string delimiter = "--" + c_type->second.substr(c_type->second.find("boundary=") + 9);
+    std::string end_delim = delimiter.substr(2) + "--";
 
     std::string req_body = req.getBody();
 
-    if (req_body.find("--" + delimiter) == std::string::npos)
-        return ;//error
+    std::vector<std::string> parts;
 
-    //get filename
-    size_t line_start = req_body.find("Content-Disposition");
-    std::string line = req_body.substr(line_start + 21, req_body.find("\n", line_start) - (line_start + 21));
-    std::stringstream ss(line);
-    std::string file;
-    std::vector<std::string> v;
+    size_t pos = 0;
+    while (req_body.find(delimiter, pos) != std::string::npos) {
+        std::string part = req_body.substr(pos, req_body.find(delimiter, pos + 1) - pos);
+        parts.push_back(part);
+        pos += req_body.find(delimiter, pos + 1);
+    }
 
-    while(std::getline(ss, file, ' ')) {
-        v.push_back(file);
-    }
-    for (size_t i = 0; i < v.size(); i++) {
-        ClearSpace(v[i]);
-        if (v[i].find("filename=\"") != std::string::npos)
-            file = v[i].substr(v[i].find('=') + 2 , (v[i].size() - 2) - (v[i].find('=') + 2));
-    }
-    //create file with filename
-    std::string f_path = upload_path + "/" + file;
+    std::string first_loc = "";
+    size_t  first_size = 0;
+
+    for (unsigned int i = 0; i < parts.size(); i++) {
+        size_t line_start = parts[i].find("Content-Disposition");
+        std::string line = parts[i].substr(line_start + 21, parts[i].find("\n", line_start) - (line_start + 21));
+        std::stringstream ss(line);
+        std::string file;
+        std::vector<std::string> v;
+
+        while(std::getline(ss, file, ' ')) {
+            v.push_back(file);
+        }
+        for (size_t i = 0; i < v.size(); i++) {
+            ClearSpace(v[i]);
+            if (v[i].find("filename=\"") != std::string::npos)
+                file = v[i].substr(v[i].find('=') + 2 , (v[i].size() - 2) - (v[i].find('=') + 2));
+        }
+
+        std::string f_path = upload_path + "/" + file;
+        std::cout << f_path << std::endl;
+
+        struct stat sb;
+        if (stat(f_path.c_str(), &sb) == 0) {
+            std::cout << "a file with this name already exists" << std::endl;
+            sendError(409, config);
+            return ;
+        }
+
+        std::ofstream ofs(f_path.c_str());
     
-    struct stat sb;
-    if (stat(f_path.c_str(), &sb) == 0) {
-        std::cout << "a file with this name already exists" << std::endl;
-        sendError(409, config);
-        return ;
-    }
+        size_t body_pos = parts[i].find("\r\n\r\n");
+        std::string file_body = parts[i].substr(body_pos + 4, (parts[i].size()) - (parts[i].size() - parts[i].find(end_delim) + body_pos + 6));
+        ofs << file_body;
 
-    std::ofstream ofs(f_path.c_str());
-    
-    size_t body_pos = req_body.find("\r\n\r\n", req_body.find("--" + delimiter));
-    std::string file_body = req_body.substr(body_pos + 4, (req_body.size()) - (req_body.size() - req_body.find(delimiter + "--") + body_pos + 6));
-    _body = file_body;
-    ofs << _body;
+        if (first_loc == "") {
+            first_loc = req.getPath() + "/" + file;
+            struct stat sb;
+            stat(f_path.c_str(), &sb);
+            first_size = sb.st_size;
+        }
+    }
     _status = "HTTP/1.1 201 Created\r\n";
     std::pair<std::string, std::string> type("Content-Type:", "*/*");
-    stat(f_path.c_str(), &sb);
-    std::pair<std::string, std::string> length("Content-Length:", return_file_length(sb.st_size));
+    std::pair<std::string, std::string> length("Content-Length:", return_file_length(first_size));
+    std::pair<std::string, std::string> location("Location: ", first_loc);
     _headers.insert(type);
     _headers.insert(length);
+    _headers.insert(location);
 }
 // mettre dans utils 
 std::string generateTimestamp() {
@@ -292,7 +309,7 @@ std::string SetAutoIndexPage(std::string d_path, ConfigLocation& loc, ConfigServ
     struct dirent *dp;
     std::string domain = "http://" + config.GetServerName() + ":" + config.GetPortStr();
     std::string path = d_path.substr(loc.GetRoot().size());
-    if (path.back() != '/')
+    if (*(path.end() - 1) != '/') // a la base , path.back() mais c++11.
         path.append("/");
     while ((dp = readdir(dir)) != NULL) {
         std::string name = dp->d_name;
