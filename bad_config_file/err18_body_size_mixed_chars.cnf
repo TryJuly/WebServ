@@ -1,0 +1,18 @@
+# ERREUR : client_max_body_size avec des lettres incrustees dans les chiffres ("10k24")
+# "10k24" n'est pas un suffixe standard ni un entier pur.
+# Distinct de err08 ("unlimited") — ici les lettres sont en milieu de valeur.
+
+server {
+    listen 8080;
+    server_name localhost;
+    root ./var/www/html;
+    index index.html;
+    client_max_body_size 10k24;
+
+    error_page 404 ./var/www/errors/404.html;
+
+    location / {
+        methods GET;
+        autoindex off;
+    }
+}

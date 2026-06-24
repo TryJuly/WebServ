@@ -1,0 +1,20 @@
+# ERREUR : ligne hors bloc apres la fermeture du dernier server
+# Un token isole apres le "}" final est hors contexte.
+# Le parser doit rejeter tout contenu orphelin apres la fin du bloc server.
+
+server {
+    listen 8080;
+    server_name localhost;
+    root ./var/www/html;
+    index index.html;
+    client_max_body_size 1048576;
+
+    error_page 404 ./var/www/errors/404.html;
+
+    location / {
+        methods GET;
+        autoindex off;
+    }
+}
+
+listen 9090;

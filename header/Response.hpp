@@ -31,7 +31,7 @@ class Response {
         void    sendLocIndex(ConfigServer& config, ConfigLocation& loc);
         void    multipart(std::map<std::string, std::string>::iterator c_type, Request& req, ConfigServer& config, std::string upload_path);
         void    octetStream(Request& req, ConfigServer& config, std::string upload_path);
-        void    autoIndex(ConfigServer& config, ConfigLocation& loc);
+        void    autoIndex(ConfigServer& config, ConfigLocation& loc, std::string f_path);
 
 
     public:
@@ -52,5 +52,6 @@ class Response {
 std::string extract_file(std::string filename);
 std::string return_file_length(size_t length);
 int         loc_index(std::string path, ConfigServer& config);
+std::string MimeType(std::string const &path);
 
 #endif

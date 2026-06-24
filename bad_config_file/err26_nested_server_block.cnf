@@ -1,0 +1,19 @@
+# ERREUR : bloc server imbrique dans un autre bloc server
+# Un "server {" a l'interieur d'un bloc server est syntaxiquement invalide.
+# Le parser doit detecter et rejeter les blocs server niches.
+
+server {
+    listen 8080;
+    server_name localhost;
+    root ./var/www/html;
+    index index.html;
+    client_max_body_size 1048576;
+
+    server {
+    }
+
+    location / {
+        methods GET;
+        autoindex off;
+    }
+}

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigLocation.hpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
+/*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/25 13:20:16 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/10 09:26:10 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/22 09:42:47 by seully           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,50 +30,49 @@
 class ConfigLocation
 {
 	public:
+		/*	Default	*/
 		ConfigLocation();
-		ConfigLocation(ConfigLocation const &copy);
 		~ConfigLocation();
+		ConfigLocation(ConfigLocation const &copy);
 		ConfigLocation&	operator=(ConfigLocation const &copy);
 
+		/*	Getter	*/
 		std::string	GetPath() const;
 		std::string	GetRoot() const;
 		std::string	Getindex() const;
 		std::string	GetRedir() const;
 		std::string	GetUpload() const;
-		bool			GetAutoIndex();
-		// std::string&	GetMethodes(int index);
 		std::string	GetCGI(std::string key) const;
-		bool			GetBoolGet() const;
-		bool			GetBoolPost() const;
-		bool			GetBoolDelete() const;
-		
 		std::map<std::string, std::string> &GetCGIMap();
 
+		bool	GetAutoIndex();
+		bool	GetBoolGet() const;
+		bool	GetBoolPost() const;
+		bool	GetBoolDelete() const;
 
+		/*	Setter	*/
 		void	SetPath(std::string const &str);
 		void	SetRoot(std::string const &str);
 		void	Setindex(std::string const &str);
 		void	SetAutoIndex(std::string &value);
+		void	SetCGI(std::string const &value);
 		void	SetRedir(std::string const &str);
 		void	SetUpload(std::string const &str);
 		void	SetMethodes(std::string const &str);
-		void	SetCGI(std::string const &value);
-		// void	SetBoolGet( void);
-		// void	SetBoolPost( void);
-		// void	SetBoolDelete( void);
 
 	private:
+		bool	_get;
+		bool	_post;
+		bool	_delete;
+		bool	_autoindex;
+
 		std::string	_path;
 		std::string	_root;
 		std::string	_index;
-		bool		_autoindex;
-		int		_get;
-		int		_post;
-		int		_delete;
-		std::string	_redir;	// 301
-		std::string	_uploadPath;	// PATH UPLOAD
-		// std::vector<std::string>	_methode;	// GET POST DELETE
-		std::map<std::string, std::string>	_cgi;	// PATH CGI
+		std::string	_redir;
+		std::string	_uploadPath;
+		std::map<std::string, std::string>	_cgi;
+
 };
 
 void	ClearSpace(std::string &str);

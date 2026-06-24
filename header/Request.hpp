@@ -2,6 +2,7 @@
 # define REQUEST_HPP
 
 #include <map>
+#include <string>
 #include <vector>
 #include <iostream>
 
@@ -26,7 +27,8 @@ class Request {
 
         Request(std::string buff);
         std::string getMethod(void) const;
-        std::string getPath(void) const ;
+        std::string getPath(void) const;
+        std::string getCookie( void );
         std::map<std::string, std::string> getHeaders(void) const;
         std::string getBody(void) const;
 		bool	IsCGI( void );

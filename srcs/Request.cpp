@@ -21,6 +21,18 @@ Request& Request::operator=(const Request& other) {
     return (*this);
 }
 
+std::string Request::getCookie( void )
+{
+    std::map<std::string, std::string>::iterator it = _headers.find("Cookie");
+    if (it == _headers.end())
+        return ("");
+    size_t  pos = it->second.find("=");
+    if (pos == std::string::npos)
+        return ("");
+    std::string value = it->second.substr(pos + 1);
+    return (value);
+}
+
 Request::~Request() {}
 
 void    Request::checkMethod(std::string& first_line) {
@@ -75,7 +87,7 @@ Request::Request(std::string buff) {
     if (pos != std::string::npos) {
         size_t  queryPos = _path.find('?', pos);
         std::string extension = _path.substr(pos, queryPos - pos);
-        if (extension == ".py") {
+        if (extension == ".py" || extension == ".php") {
             _isCGI = true;
             return ;
         }

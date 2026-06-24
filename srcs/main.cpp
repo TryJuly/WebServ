@@ -3,18 +3,18 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
+/*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 17:15:09 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/18 10:31:48 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/23 10:02:34 by seully           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <signal.h>
-#include <iostream>
-#include <stdexcept>
-#include <signal.h>
-#include "../header/Server.hpp"
+# include <signal.h>
+# include <iostream>
+# include <signal.h>
+# include <stdexcept>
+# include "../header/Server.hpp"
 
 void	PrintFullConfigServer(Server &server);
 
@@ -29,7 +29,7 @@ int	main(int ac, char **av)
 	}
 	catch(const std::exception& e) {
 		std::cerr << RED << e.what() << RESET << std::endl;
-		std::cout << GREEN << "###	FINISH	###" << RESET << std::endl;
+		std::cout << GREEN << "###	ERROR	###" << RESET << std::endl;
 		return (1);
 	}
 	std::cout << GREEN << "###	FINISH	###" << RESET << std::endl;

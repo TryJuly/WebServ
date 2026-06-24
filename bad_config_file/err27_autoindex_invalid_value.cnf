@@ -1,0 +1,23 @@
+# ERREUR : valeur invalide pour 'autoindex' ("yes" au lieu de "on" ou "off")
+# Seules les valeurs "on" et "off" sont acceptees.
+# "yes", "true", "1" et autres variantes doivent etre rejetees.
+
+server {
+    listen 8080;
+    server_name localhost;
+    root ./var/www/html;
+    index index.html;
+    client_max_body_size 1048576;
+
+    error_page 404 ./var/www/errors/404.html;
+
+    location / {
+        methods GET;
+        autoindex yes;
+    }
+
+    location /api {
+        methods GET POST;
+        autoindex 1;
+    }
+}
