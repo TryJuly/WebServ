@@ -1,0 +1,18 @@
+# ERREUR : port avec des lettres collees apres les chiffres ("80abc")
+# "80abc" n'est pas un entier pur — le parser doit rejeter ca.
+# Distinct de err06 qui utilise un mot pur comme "localhost".
+
+server {
+    listen 80abc;
+    server_name localhost;
+    root ./var/www/html;
+    index index.html;
+    client_max_body_size 1048576;
+
+    error_page 404 ./var/www/errors/404.html;
+
+    location / {
+        methods GET;
+        autoindex off;
+    }
+}

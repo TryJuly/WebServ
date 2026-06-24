@@ -3,43 +3,26 @@
 /*                                                        :::      ::::::::   */
 /*   CGI.cpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
+/*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/02 15:35:11 by seully            #+#    #+#             */
-/*   Updated: 2026/06/18 11:37:48 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/22 08:59:00 by seully           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../header/CGI.hpp"
+#include <string>
+#include <cstddef>
 #include <stdexcept>
+#include "../header/CGI.hpp"
 
+static bool ValidMethode(std::string method);
+static	std::string	SetEnvpVarName(std::string str);
 static std::string	UrlDecode(std::string const &url);
+
+/*	Default	*/
 
 CGI::CGI()
 { return ; }
-
-bool ValidMethode(std::string method)
-{
-	if (method == "GET")
-		return (true);
-	if (method == "POST")
-		return (true);
-	if (method == "DELETE")
-		return (true);
-	if (method == "PATCH")
-		return (true);
-	if (method == "PUT")
-		return (true);
-	if (method == "OPTIONS")
-		return (true);
-	if (method == "HEAD")
-		return (true);
-	if (method == "CONNECT")
-		return (true);
-	if (method == "TRACE")
-		return (true);
-	return (false);
-}
 
 CGI::CGI(std::string const &request)
 {
@@ -103,169 +86,10 @@ CGI::CGI(std::string const &request)
 	return ;
 }
 
-void	CGI::ParseFirstLine(std::string const &request)
-{
-	bool isQuery = true;
-	// size_t	pos = 0;
-	std::string first_line = request.substr(0, request.find_first_of('\n'));
-	size_t	posStart = first_line.find("/");
-	if (posStart == std::string::npos)
-		throw std::invalid_argument("400 Error: Invalid HTTP request");	// Error 400
-	if (first_line.substr(0, 3) == "GET")
-		_stock.insert(std::make_pair("Methode", "GET"));
-	else if (first_line.substr(0, 4) == "POST")
-		_stock.insert(std::make_pair("Methode", "POST"));
-	size_t	posEnd = first_line.find("?");
-	if (posEnd == std::string::npos) {
-		posEnd = first_line.find(" ", posStart);
-		isQuery = false;
-	}
-	std::string path = first_line.substr(posStart, posEnd - posStart);
-	_stock.insert(std::make_pair("Path", path));
-
-	if (isQuery == true) {
-		size_t	posEndQuery = first_line.find(' ', posEnd);
-		std::string query = first_line.substr(posEnd + 1, posEndQuery - posEnd - 1);
-		std::string result = UrlDecode(query);
-		_stock.insert(std::make_pair("Query", result));
-	}
-	// Find html version
-	posStart = first_line.find("HTTP/");
-	if (posStart == std::string::npos)
-		throw std::invalid_argument("400");	// Error 400
-	std::string version = first_line.substr(posStart, 8);	// HTTP/1.1
-	_stock.insert(std::make_pair("Version", version));
-	return ;
-}
-
-void	CGI::ParseHeaders(std::string const &request)
-{
-	// size_t	startBody = request.find("\r\n\r\n");
-	size_t	pos = request.find("\n") + 1;
-	while (pos < request.size()) {	//	pos < startBody
-		size_t end = request.find("\n", pos);
-		if (end != std::string::npos && request[end - 1] == '\r')
-			end--;
-		if (end == std::string::npos || end == pos)
-			break ;
-		std::string line = request.substr(pos, end - pos);
-		size_t	point = line.find(":");
-		if (point != std::string::npos) {
-			std::string key = line.substr(0, point);
-			std::string value = line.substr(point + 2);
-			_stock.insert(std::make_pair(key, value));
-		}
-		pos = end + 2;
-	}
-	return ;
-}
-
-
-static	std::string	SetEnvpVarName(std::string str);
-
-void	CGI::SetEnvpCGI(ConfigLocation const &config)
-{
-	std::map<std::string, std::string>::iterator it = _stock.find("Methode");
-	if (it->second == "GET" && config.GetBoolGet() == false)
-		throw (std::runtime_error("405 Error: Methode not allowed"));
-	else if (it->second == "POST" && config.GetBoolPost() == false)
-		throw (std::runtime_error("405 Error: Methode not allowed"));
-
-	_envp = new char*[_stock.size() + 2];
-
-	int i = 0;
-	for (std::map<std::string, std::string>::iterator it = _stock.begin(); it != _stock.end(); it++) {
-		if (it->first == "Body")
-			continue ;
-		std::string input = SetEnvpVarName(it->first) + "=" + it->second;
-		_envp[i] = new char[input.size() + 1];
-		std::strcpy(_envp[i], input.c_str());
-		i++;
-	}
-	std::string input = "GATEWAY_INTERFACE=CGI/1.1";
-	_envp[i] = new char[input.size() + 1];
-	std::strcpy(_envp[i++], input.c_str());
-	_envp[i] = NULL;
-
-	_scriptPath = config.GetRoot() + _stock["Path"];	// Path exec CGI /usr/bin/python3
-	_scriptPath = _scriptPath.substr(_scriptPath.find('/') + 1);
-	struct stat sstat;
-	if (stat(_scriptPath.c_str(), &sstat) != 0)
-		throw (std::invalid_argument("404 Error: Invalid path location: " + _scriptPath));
-	std::string extension = _scriptPath.substr(_scriptPath.find_last_of('.'));
-	_inter = config.GetCGI(extension);		// Path exec script /var/www/cgi-bin/hello.py
-	return ;
-}
-
-static	std::string	SetEnvpVarName(std::string str)
-{
-	if (!str.compare("Methode"))
-		return (std::string("REQUEST_METHOD"));
-	else if (!str.compare("Query"))
-		return (std::string("QUERY_STRING"));
-	else if (!str.compare("Path"))
-		return (std::string("PATH_INFO"));
-	else if (!str.compare("Content-Length"))
-		return (std::string("CONTENT_LENGTH"));
-	else if (!str.compare("Content-Type"))
-		return (std::string("CONTENT_TYPE"));
-	else if (!str.compare("Host"))
-		return (std::string("HTTP_HOST"));
-	else if (!str.compare("Version"))
-		return (std::string("SERVER_PROTOCOL"));
-	return (std::string(str));
-}
-
-/*
-	Envp parsing cgi
-
-	REQUEST_METHODE=
-	QUERY_STRING=
-	PATH_INFO=
-	SCRIPT_FILENAME=
-	CONTENT_TYPE=
-	CONTENT_LENGTH=
-	SERVER_NAME=
-	SERVER_PORT=
-	HTTP_HOST=
-*/
-
-static std::string	UrlDecode(std::string const &url)
-{
-	std::string result;
-	for (size_t i = 0; i < url.size(); i++) {
-		if (url[i] == '%' && i + 2 < url.size()) {
-			std::string hex = url.substr(i + 1, 2);
-			char c = static_cast<char>(std::strtol(hex.c_str(), NULL, 16));
-			result.push_back(c);
-			i += 2;
-		}
-		else if (url[i] == '+')
-			result.push_back(' ');
-		else
-			result.push_back(url[i]);
-	}
-	return (result);
-}
-
-void	CGI::SetTimeStart(std::time_t time)
-{
-	_cgiStart = time;
-	return ;
-}
-
 CGI::CGI(CGI const &copy)
 {
 	(*this) = copy;
 	return ;
-}
-
-ssize_t	CGI::GetBodySize( void )
-{
-	std::map<std::string, std::string>::iterator it = _stock.find("Body");
-	if (it == _stock.end())
-		return (-1);
-	return (it->second.size());
 }
 
 CGI::~CGI()
@@ -303,9 +127,64 @@ CGI&	CGI::operator=(CGI const &copy)
 	return (*this);
 }
 
-void	CGI::LaunchCGI(ConfigLocation const &config)
+void	CGI::ParseFirstLine(std::string const &request)
 {
-	SetEnvpCGI(config);
+	bool isQuery = true;
+	std::string first_line = request.substr(0, request.find_first_of('\n'));
+	size_t	posStart = first_line.find("/");
+	if (posStart == std::string::npos)
+		throw std::invalid_argument("400 Error: Invalid HTTP request");
+	if (first_line.substr(0, 3) == "GET")
+		_stock.insert(std::make_pair("Methode", "GET"));
+	else if (first_line.substr(0, 4) == "POST")
+		_stock.insert(std::make_pair("Methode", "POST"));
+	size_t	posEnd = first_line.find("?");
+	if (posEnd == std::string::npos) {
+		posEnd = first_line.find(" ", posStart);
+		isQuery = false;
+	}
+	std::string path = first_line.substr(posStart, posEnd - posStart);
+	_stock.insert(std::make_pair("Path", path));
+
+	if (isQuery == true) {
+		size_t	posEndQuery = first_line.find(' ', posEnd);
+		std::string query = first_line.substr(posEnd + 1, posEndQuery - posEnd - 1);
+		std::string result = UrlDecode(query);
+		_stock.insert(std::make_pair("Query", result));
+	}
+	// Find html version
+	posStart = first_line.find("HTTP/");
+	if (posStart == std::string::npos)
+		throw std::invalid_argument("400");
+	std::string version = first_line.substr(posStart, 8);
+	_stock.insert(std::make_pair("Version", version));
+	return ;
+}
+
+void	CGI::ParseHeaders(std::string const &request)
+{
+	size_t	pos = request.find("\n") + 1;
+	while (pos < request.size()) {
+		size_t end = request.find("\n", pos);
+		if (end != std::string::npos && request[end - 1] == '\r')
+			end--;
+		if (end == std::string::npos || end == pos)
+			break ;
+		std::string line = request.substr(pos, end - pos);
+		size_t	point = line.find(":");
+		if (point != std::string::npos) {
+			std::string key = line.substr(0, point);
+			std::string value = line.substr(point + 2);
+			_stock.insert(std::make_pair(key, value));
+		}
+		pos = end + 2;
+	}
+	return ;
+}
+
+void	CGI::LaunchCGI(ConfigLocation const &config, ConfigServer &configServer)
+{
+	SetEnvpCGI(config, configServer);
 	char *argv[] = {
 		const_cast<char*>(_inter.c_str()),
 		const_cast<char*>(_scriptPath.c_str()),
@@ -342,11 +221,21 @@ void	CGI::LaunchCGI(ConfigLocation const &config)
 			write(pipeIn[1], it->second.c_str(), it->second.size());
 		close(pipeIn[1]);
 		close(pipeOut[1]);
-		fcntl(pipeOut[0], F_SETFL, O_NONBLOCK);	// Set le fd en mode non bloquant
+		fcntl(pipeOut[0], F_SETFL, O_NONBLOCK);
 		_pipeFd = pipeOut[0];
 		_pid = child;
 	}
 	return ;
+}
+
+/*	Getter	*/
+
+ssize_t	CGI::GetBodySize( void )
+{
+	std::map<std::string, std::string>::iterator it = _stock.find("Body");
+	if (it == _stock.end())
+		return (-1);
+	return (it->second.size());
 }
 
 pid_t	CGI::GetPidCgi()
@@ -354,3 +243,132 @@ pid_t	CGI::GetPidCgi()
 
 int		CGI::GetPipeFd()
 { return (_pipeFd); }
+
+/*	Setter	*/
+
+void	CGI::SetTimeStart(std::time_t time)
+{
+	_cgiStart = time;
+	return ;
+}
+
+void	CGI::SetEnvpCGI(ConfigLocation const &config, ConfigServer &configServer)
+{
+	std::map<std::string, std::string>::iterator it = _stock.find("Methode");
+	if (it->second == "GET" && config.GetBoolGet() == false)
+		throw (std::runtime_error("405 Error: Methode not allowed"));
+	else if (it->second == "POST" && config.GetBoolPost() == false)
+		throw (std::runtime_error("405 Error: Methode not allowed"));
+
+	_scriptPath = config.GetRoot() + _stock["Path"];
+	_scriptPath = _scriptPath.substr(_scriptPath.find('/') + 1);
+	struct stat sstat;
+	if (stat(_scriptPath.c_str(), &sstat) != 0)
+		throw (std::invalid_argument("404 Error: Invalid path location: " + _scriptPath));
+	std::string extension = _scriptPath.substr(_scriptPath.find_last_of('.'));
+	_inter = config.GetCGI(extension);
+
+	_envp = new char*[_stock.size() + 9];
+	int i = 0;
+	for (std::map<std::string, std::string>::iterator it = _stock.begin(); it != _stock.end(); it++) {
+		if (it->first == "Body")
+			continue ;
+		std::string input = SetEnvpVarName(it->first) + "=" + it->second;
+		_envp[i] = new char[input.size() + 1];
+		std::strcpy(_envp[i], input.c_str());
+		i++;
+	}
+	if (_stock.find("Query") == _stock.end()) {
+		std::string input = "QUERY_STRING=";
+		_envp[i] = new char[input.size() + 1];
+		std::strcpy(_envp[i++], input.c_str());
+	}
+	std::string scriptFilename = "SCRIPT_FILENAME=" + _scriptPath;
+	_envp[i] = new char[scriptFilename.size() + 1];
+	std::strcpy(_envp[i++], scriptFilename.c_str());
+	std::string pathInfo = "PATH_INFO=";
+	_envp[i] = new char[pathInfo.size() + 1];
+	std::strcpy(_envp[i++], pathInfo.c_str());
+	std::string serverName = "SERVER_NAME=" + configServer.GetServerName();
+	_envp[i] = new char[serverName.size() + 1];
+	std::strcpy(_envp[i++], serverName.c_str());
+	std::string serverPort = "SERVER_PORT=" + configServer.GetPortStr();
+	_envp[i] = new char[serverPort.size() + 1];
+	std::strcpy(_envp[i++], serverPort.c_str());
+	std::string gateway = "GATEWAY_INTERFACE=CGI/1.1";
+	_envp[i] = new char[gateway.size() + 1];
+	std::strcpy(_envp[i++], gateway.c_str());
+	std::string	php = "REDIRECT_STATUS=200";
+	_envp[i] = new char[php.size() + 1];
+	std::strcpy(_envp[i++], php.c_str());
+	_envp[i] = NULL;
+
+	return ;
+}
+
+/*	Static Function	*/
+
+static std::string	UrlDecode(std::string const &url)
+{
+	std::string result;
+	for (size_t i = 0; i < url.size(); i++) {
+		if (url[i] == '%' && i + 2 < url.size()) {
+			std::string hex = url.substr(i + 1, 2);
+			char c = static_cast<char>(std::strtol(hex.c_str(), NULL, 16));
+			result.push_back(c);
+			i += 2;
+		}
+		else if (url[i] == '+')
+			result.push_back(' ');
+		else
+			result.push_back(url[i]);
+	}
+	return (result);
+}
+
+static	std::string	SetEnvpVarName(std::string str)
+{
+	if (!str.compare("Methode"))
+		return (std::string("REQUEST_METHOD"));
+	else if (!str.compare("Query"))
+		return (std::string("QUERY_STRING"));
+	else if (!str.compare("Path"))
+		return (std::string("SCRIPT_NAME"));
+	else if (!str.compare("Content-Length"))
+		return (std::string("CONTENT_LENGTH"));
+	else if (!str.compare("Content-Type"))
+		return (std::string("CONTENT_TYPE"));
+	else if (!str.compare("Version"))
+		return (std::string("SERVER_PROTOCOL"));
+	std::string result = "HTTP_";
+	for (size_t i = 0; i < str.size(); i++) {
+		if (str[i] == '-')
+			result += '_';
+		else
+			result += static_cast<char>(std::toupper(static_cast<unsigned char>(str[i])));
+	}
+	return (result);
+}
+
+static bool ValidMethode(std::string method)
+{
+	if (method == "GET")
+		return (true);
+	if (method == "POST")
+		return (true);
+	if (method == "DELETE")
+		return (true);
+	if (method == "PATCH")
+		return (true);
+	if (method == "PUT")
+		return (true);
+	if (method == "OPTIONS")
+		return (true);
+	if (method == "HEAD")
+		return (true);
+	if (method == "CONNECT")
+		return (true);
+	if (method == "TRACE")
+		return (true);
+	return (false);
+}

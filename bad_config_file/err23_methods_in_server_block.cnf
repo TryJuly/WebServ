@@ -1,0 +1,21 @@
+# ERREUR : directive 'methods' directement dans le bloc server (mauvaise section)
+# 'methods' appartient au contexte location — pas au contexte server.
+# Egalement : 'upload_path' et 'autoindex' sont aussi des directives de location.
+
+server {
+    listen 8080;
+    server_name localhost;
+    root ./var/www/html;
+    index index.html;
+    client_max_body_size 1048576;
+    methods GET POST;
+    autoindex on;
+    upload_path ./var/www/uploads;
+
+    error_page 404 ./var/www/errors/404.html;
+
+    location / {
+        methods GET;
+        autoindex off;
+    }
+}

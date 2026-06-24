@@ -1,0 +1,18 @@
+# ERREUR : client_max_body_size depasse la capacite d'un entier non-signe 64 bits
+# 18446744073709551616 = 2^64 -> overflow de size_t/unsigned long sur toute plateforme.
+# Le parser doit detecter le depassement et rejeter la valeur.
+
+server {
+    listen 8080;
+    server_name localhost;
+    root ./var/www/html;
+    index index.html;
+    client_max_body_size 18446744073709551616;
+
+    error_page 404 ./var/www/errors/404.html;
+
+    location / {
+        methods GET;
+        autoindex off;
+    }
+}

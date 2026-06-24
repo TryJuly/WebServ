@@ -1,0 +1,18 @@
+# ERREUR : lettre glissee au milieu du numero de port ("8o80" au lieu de "8080")
+# Typo classique : 'o' (lettre) a la place de '0' (zero).
+# Le parser doit detecter que ce n'est pas un entier valide.
+
+server {
+    listen 8o80;
+    server_name localhost;
+    root ./var/www/html;
+    index index.html;
+    client_max_body_size 1048576;
+
+    error_page 404 ./var/www/errors/404.html;
+
+    location / {
+        methods GET;
+        autoindex off;
+    }
+}

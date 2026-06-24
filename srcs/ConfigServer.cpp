@@ -3,24 +3,28 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigServer.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
+/*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 08:36:43 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/18 15:32:20 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/23 09:37:53 by seully           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../header/ConfigServer.hpp"
+#include <stdexcept>
 
 static char	GetIdentifier(std::string &str);
 static char	GetIdentifierLocation(std::string &token);
 static void	CheckConfigRequired(std::set<char> &checkDoube);
+// static void	ValidConfigMini(std::set<std::string> &checkConfigMin);
 static int	SkipLocation(std::vector<std::string> &serverBloc, int index);
 static ssize_t	StartLocation(std::vector<std::string> &serverChunk, size_t index);
 static void	ServerPart(std::vector<std::string> &serverBloc, ConfigServer &config);
 static void	FillConfigLocation(ConfigLocation &config, std::vector<std::string> &locationChunk, std::string &path);
 
-/*	Set Configuration Minumum	*/
+
+/*	Default	*/
+
 ConfigServer::ConfigServer()
 {
 	struct stat	st;
@@ -30,11 +34,11 @@ ConfigServer::ConfigServer()
 	
 	if (stat("./var/www", &st) != 0)
 		throw (std::invalid_argument("Error: Invalid path : ./var/www"));
-	_rootPath = "./var/www";	// PATH Root TODO
+	_rootPath = "./var/www";
 
 	if (stat("./var/www/html", &st) != 0)
 		throw (std::invalid_argument("Error: Invalid path : ./var/www/html"));
-	_index = "./var/www/html";	// PATH Index	TODO
+	_index = "./var/www/html";
 	_serverName = "localhost";
 
 	if (stat("./var/www/errors/400.html", &st) != 0)
@@ -94,32 +98,8 @@ ConfigServer::ConfigServer()
 	return ;
 }
 
-void	ConfigServer::AddConfigLocation(ConfigLocation &config)
-{
-	_locations.push_back(config);
-	return ;
-}
-
-int	ConfigServer::FindLocationPath(std::string const &path)
-{
-	for (unsigned int i = 0; i < _locations.size(); i++) {
-		if (_locations[i].GetPath() == path)
-			return (i);
-	}
-	return (-1);
-}
-
-void	ConfigServer::CleanSetError()
-{
-	_checkDoubleError.clear();
-	return ;
-}
-
 ConfigServer::ConfigServer(ConfigServer const &copy)
-{
-	(*this) = copy;
-	return ;
-}
+{ (*this) = copy; return ; }
 
 ConfigServer::~ConfigServer()
 { return ; }
@@ -130,6 +110,7 @@ ConfigServer&	ConfigServer::operator=(ConfigServer const &copy)
 		_port = copy._port;
 		_index = copy._index;
 		_socket = copy._socket;
+		_portStr = copy._portStr;
 		_rootPath = copy._rootPath;
 		_locations = copy._locations;
 		_serverName = copy._serverName;
@@ -140,6 +121,23 @@ ConfigServer&	ConfigServer::operator=(ConfigServer const &copy)
 		_checkDoubleError = copy._checkDoubleError;
 	}
 	return (*this);
+}
+
+/*	Function	*/
+
+void	ConfigServer::AddConfigLocation(ConfigLocation &config)
+{ _locations.push_back(config); return ; }
+
+void	ConfigServer::CleanSetError()
+{ _checkDoubleError.clear(); return ; }
+
+int	ConfigServer::FindLocationPath(std::string const &path)
+{
+	for (unsigned int i = 0; i < _locations.size(); i++) {
+		if (_locations[i].GetPath() == path)
+			return (i);
+	}
+	return (-1);
 }
 
 void	ConfigServer::FillConfigServer(std::vector<std::string> &serverChunk)
@@ -187,6 +185,178 @@ void	ConfigServer::FillConfigServer(std::vector<std::string> &serverChunk)
 		start = end;
 	}
 }
+
+/*	GETTER	*/
+
+int	ConfigServer::GetPort()
+{ return (_port); }
+
+int	ConfigServer::GetSocket()
+{ return (_socket); }
+
+int	ConfigServer::GetMaxBodySize()
+{ return (_maxBodySize); }
+
+std::string	&ConfigServer::GetRoot()
+{ return (_rootPath); }
+
+std::string	&ConfigServer::GetIndex()
+{ return (_index); }
+
+std::string	&ConfigServer::GetServerName()
+{ return (_serverName); }
+
+struct sockaddr_in	&ConfigServer::GetSockAddr(void)
+{ return (_sockAddress); }
+
+std::map<int, std::string>	&ConfigServer::GetMapError()
+{ return (_errorPages); }
+
+ConfigLocation	&ConfigServer::GetConfigLocation(int index)
+{ return (_locations[index]); }
+
+int	ConfigServer::GetNumberLocation(void)
+{ return (_locations.size()); }
+
+std::string	ConfigServer::GetPortStr( void )
+{ return (_portStr); }
+
+std::string	ConfigServer::GetErrorPages(int number)
+{
+	std::map<int, std::string>::iterator it;
+	it = _errorPages.find(number);
+	if (it == _errorPages.end())
+		return ("Error");
+	return (it->second);
+}
+
+/*	SETTER	*/
+
+void	ConfigServer::SetPort(int port)
+{ _port = port; return ; }
+
+void	ConfigServer::SetSocket(int socket)
+{ _socket = socket; return ; }
+
+void	ConfigServer::SetMaxBodySize(int BodySize)
+{ _maxBodySize = BodySize; return ; }
+
+void	ConfigServer::SetRoot(std::string const &rootPath)
+{ _rootPath = rootPath; return ; }
+
+void	ConfigServer::SetIndex(std::string const &index)
+{ _index = index; return ; }
+
+void	ConfigServer::SetServerName(std::string const &ServerName)
+{ _serverName = ServerName; return ; }
+
+void	ConfigServer::SetConfigLocation(ConfigLocation const &config)
+{ _locations.push_back(config); return ; }
+
+void	ConfigServer::SetPortStr(std::string port)
+{ _portStr = port; return ; }
+
+void	ConfigServer::SetErrorPages(std::string errorPage)
+{
+	size_t	end = errorPage.find_first_of(" \t");
+	if (end == std::string::npos)
+		throw (std::invalid_argument("Error: Error page config file."));
+
+	std::string	number = errorPage.substr(0, end);
+	std::string	path = errorPage.substr(end, errorPage.size());
+
+	ClearSpace(path);
+	char *endptr;
+	long result = std::strtol(number.c_str(), &endptr, 10);
+
+	if (*endptr != '\0' || result < 100 || result > 599)
+		throw (std::invalid_argument("Error: Invalid error page code: " + number));
+	if (_checkDoubleError.count(result) > 0)
+		throw (std::invalid_argument("Error: Two same error page find: " + number));
+	_checkDoubleError.insert(result);
+
+	std::map<int, std::string>::iterator it;
+	it = _errorPages.find(result);
+
+	if (it != _errorPages.end())
+		it->second = path;
+	else
+		_errorPages.insert(std::pair<int, std::string>(result, path));
+	return ;
+}
+
+void	ConfigServer::SetConfigServer(std::string &str, char iD)
+{
+	size_t	start = str.find_first_of(" \t");
+	size_t	end = str.find(';');
+	// std::set<std::string >	checkConfigMin;
+
+	if (end == std::string::npos)
+			throw (std::invalid_argument("Error: Missing `;' end of line: " + str));
+	else if (start == std::string::npos)
+			throw (std::invalid_argument("Error: Invalid syntax line: " + str));
+
+	std::string value = str.substr(start, end - start);
+	ClearSpace(value);
+	switch (iD) {
+		case 'L': {
+			char *endptr;
+			long port = std::strtol(value.c_str(), &endptr, 10);
+			if (*endptr != '\0' || port < 0 || port > 65535)
+				throw (std::invalid_argument("Error: Invalid port value: " + value));
+			SetPort(port);
+			SetPortStr(value);
+			// checkConfigMin.insert("listen");
+			break ;
+		}
+		case 'S':
+			SetServerName(value);
+			// checkConfigMin.insert("server_name");
+			break ;
+		case 'R':
+			SetRoot(value);
+			// checkConfigMin.insert("root");
+			break ;
+		case 'I':
+			SetIndex(value);
+			// checkConfigMin.insert("index");
+			break ;
+		case 'C': {
+			char *endptr;
+			long size = std::strtol(value.c_str(), &endptr, 10);
+			if (*endptr != '\0' || size < 0 || size > 2147483647)
+				throw (std::invalid_argument("Error: Invalid body size value: " + value));
+			SetMaxBodySize(size);
+			// checkConfigMin.insert("client_max_body_size");
+			break ;
+		}
+		case 'E':
+			SetErrorPages(value);
+			// checkConfigMin.insert("error_page");
+			break ;
+		default:
+			break;
+	}
+	// ValidConfigMini(checkConfigMin);
+	return ;
+}
+
+/*	Statique function	*/
+
+// static void	ValidConfigMini(std::set<std::string> &checkConfigMin)
+// {
+// 	if (checkConfigMin.count("client_max_body_size") != 1)
+// 		throw (std::invalid_argument("Error: Missing line -> client_max_body_size ‘value'."));
+// 	if (checkConfigMin.count("listen") != 1)
+// 		throw (std::invalid_argument("Error: Missing line -> listen ‘value'."));
+// 	if (checkConfigMin.count("server_name") != 1)
+// 		throw (std::invalid_argument("Error: Missing line -> server_name ‘value'."));
+// 	if (checkConfigMin.count("root") != 1)
+// 		throw (std::invalid_argument("Error: Missing line -> root ‘value'."));
+// 	if (checkConfigMin.count("index") != 1)
+// 		throw (std::invalid_argument("Error: Missing line -> index ‘value'."));
+// 	return ;
+// }
 
 static void	FillConfigLocation(ConfigLocation &config, std::vector<std::string> &locationChunk, std::string &path)
 {
@@ -243,186 +413,13 @@ static void	FillConfigLocation(ConfigLocation &config, std::vector<std::string> 
 			config.SetAutoIndex(value);
 			break;
 		default:
-			throw (std::invalid_argument("Error: Invalid argument `" + locationChunk[i] + "'."));
+			throw (std::invalid_argument("Error: Invalid argument location `" + locationChunk[i] + "'."));
 			break;
 		}
 	}
 	config.SetPath(path);
 	return ;
 }
-
-/*	GETTER	*/
-
-int	ConfigServer::GetPort()
-{ return (_port); }
-
-int	ConfigServer::GetSocket()
-{ return (_socket); }
-
-int	ConfigServer::GetMaxBodySize()
-{ return (_maxBodySize); }
-
-std::string	&ConfigServer::GetRoot()
-{ return (_rootPath); }
-
-std::string	&ConfigServer::GetIndex()
-{ return (_index); }
-
-std::string	&ConfigServer::GetServerName()
-{ return (_serverName); }
-
-struct sockaddr_in	&ConfigServer::GetSockAddr(void)
-{ return (_sockAddress); }
-
-std::map<int, std::string>	&ConfigServer::GetMapError()
-{ return (_errorPages); }
-
-
-std::string	ConfigServer::GetErrorPages(int number)
-{
-	std::map<int, std::string>::iterator it;
-	it = _errorPages.find(number);
-	if (it == _errorPages.end())
-		return ("Error");
-	return (it->second);
-}
-ConfigLocation	&ConfigServer::GetConfigLocation(int index)
-{ return (_locations[index]); }
-
-int	ConfigServer::GetNumberLocation(void)
-{ return (_locations.size()); }
-
-/*	SETTER	*/
-
-void	ConfigServer::SetPort(int port)
-{
-	_port = port;
-	return ;
-}
-
-void	ConfigServer::SetSocket(int socket)
-{
-	_socket = socket;
-	return ;
-}
-
-void	ConfigServer::SetMaxBodySize(int BodySize)
-{
-	_maxBodySize = BodySize;
-	return ;
-}
-
-void	ConfigServer::SetRoot(std::string const &rootPath)
-{
-	_rootPath = rootPath;
-	return ;
-}
-
-void	ConfigServer::SetIndex(std::string const &index)
-{
-	_index = index;
-	return ;
-}
-
-void	ConfigServer::SetServerName(std::string const &ServerName)
-{
-	_serverName = ServerName;
-	return ;
-}
-
-void	ConfigServer::SetErrorPages(std::string errorPage)
-{
-	size_t	end = errorPage.find_first_of(" \t");
-	if (end == std::string::npos)
-		throw (std::invalid_argument("Error: Error page config file."));
-
-	std::string	number = errorPage.substr(0, end);
-	std::string	path = errorPage.substr(end, errorPage.size());
-
-	ClearSpace(path);
-	char *endptr;
-	long result = std::strtol(number.c_str(), &endptr, 10);
-
-	if (*endptr != '\0' || result < 100 || result > 599)
-		throw (std::invalid_argument("Error: Invalid error page code: " + number));
-	if (_checkDoubleError.count(result) > 0)
-		throw (std::invalid_argument("Error: Two same error page find: " + number));
-	_checkDoubleError.insert(result);
-
-	std::map<int, std::string>::iterator it;
-	it = _errorPages.find(result);
-
-	if (it != _errorPages.end())
-		it->second = path;
-	else
-		_errorPages.insert(std::pair<int, std::string>(result, path));
-	return ;
-}
-
-void	ConfigServer::SetConfigLocation(ConfigLocation const &config)
-{
-	_locations.push_back(config);
-	return ;
-}
-
-void	ConfigServer::SetPortStr(std::string port)
-{
-	_portStr = port;
-	return ;
-}
-
-std::string	ConfigServer::GetPortStr( void )
-{ return (_portStr); }
-
-void	ConfigServer::SetConfigServer(std::string &str, char iD)
-{
-	size_t	start = str.find_first_of(" \t");
-	size_t	end = str.find(';');
-
-	if (end == std::string::npos)
-			throw (std::invalid_argument("Error: Missing `;' end of line: " + str));
-	else if (start == std::string::npos)
-			throw (std::invalid_argument("Error: Invalid syntax line: " + str));
-
-	std::string value = str.substr(start, end - start);
-	ClearSpace(value);
-	switch (iD) {
-		case 'L': {
-			char *endptr;
-			long port = std::strtol(value.c_str(), &endptr, 10);
-			if (*endptr != '\0' || port < 0 || port > 65535)
-				throw (std::invalid_argument("Error: Invalid port value: " + value));
-			SetPort(port);
-			SetPortStr(value);
-			break ;
-		}
-		case 'S':
-			SetServerName(value);
-			break ;
-		case 'R':
-			SetRoot(value);
-			break ;
-		case 'I':
-			SetIndex(value);
-			break ;
-		case 'C': {
-			char *endptr;
-			long size = std::strtol(value.c_str(), &endptr, 10);
-			if (*endptr != '\0' || size < 0 || size > 2147483647)
-				throw (std::invalid_argument("Error: Invalid port value: " + value));
-			SetMaxBodySize(size);
-			break ;
-		}
-		case 'E':
-			SetErrorPages(value);
-			break ;
-		default:
-			break;
-	}
-	return ;
-}
-
-/*	Statique help function	*/
 
 static void	ServerPart(std::vector<std::string> &serverBloc, ConfigServer &config)
 {
@@ -468,6 +465,11 @@ static void	ServerPart(std::vector<std::string> &serverBloc, ConfigServer &confi
 				break ;
 			case 'l':
 				i = SkipLocation(serverBloc, i);
+				break ;
+			case 'm':
+				if (checkDouble.count('m') > 0)
+					throw (std::invalid_argument("Error: 2 identical instructions: " + serverBloc[i]));
+				checkDouble.insert('m');
 				break ;
 			case 's':
 				break ;
@@ -540,7 +542,9 @@ static char	GetIdentifier(std::string &str)
 		return ('E');
 	if (!token.compare("location"))
 		return ('l');
-	if (!token.compare("server") || !token.compare("{") || !token.compare("}"))
+	if (!token.compare("server"))
+		return ('m');
+	if (!token.compare("{") || !token.compare("}"))
 		return ('s');
 	return ('n');
 }
@@ -570,10 +574,10 @@ static ssize_t	StartLocation(std::vector<std::string> &serverChunk, size_t index
 {
 	unsigned int	i = index;
 
-	while (i < serverChunk.size() && serverChunk[i].find("location") == std::string::npos)	// change
+	while (i < serverChunk.size() && serverChunk[i].find("location") == std::string::npos)
 		i++;
 
-	if (i >= serverChunk.size())	// change
+	if (i >= serverChunk.size())
 		return (-1);
 	return (i);
 }

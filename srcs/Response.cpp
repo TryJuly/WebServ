@@ -1,4 +1,8 @@
 #include "../header/Response.hpp"
+#include <cstddef>
+#include <stdexcept>
+#include <string>
+#include <sys/stat.h>
 
 Response::Response() {}
 
@@ -82,7 +86,7 @@ void Response::getResponse(Request& req, ConfigServer& config) {
         struct stat sb;
         if (stat(f_path.c_str(), &sb) != 0 || S_ISDIR(sb.st_mode)) {
             if (loc.GetAutoIndex()) {
-                autoIndex(config, loc);
+                autoIndex(config, loc, f_path);
                 // sendIndex(config);
             }
             else if (loc.Getindex() != "") {
@@ -251,30 +255,31 @@ void Response::deleteResponse(Request& req, ConfigServer& config) {
 }
 
 
-std::string SetAutoIndexPage(std::string d_path, ConfigLocation& loc);
+std::string SetAutoIndexPage(std::string d_path, ConfigLocation& loc, ConfigServer& config);
 
-void    Response::autoIndex(ConfigServer& config, ConfigLocation& loc)
+void    Response::autoIndex(ConfigServer& config, ConfigLocation& loc, std::string f_path)
 {
+    std::string result;
     std::string d_path = loc.GetRoot() + loc.GetPath();
-    std::cout << d_path << std::endl;
 
     struct stat sb;
-    if (stat(d_path.c_str(), &sb) != 0 && !S_ISDIR(sb.st_mode)) {
-        sendError(404, config);
-        return ;
+    if (stat(f_path.c_str(), &sb) == 0 && S_ISDIR(sb.st_mode)) {
+        result = SetAutoIndexPage(f_path, loc, config);
     }
-    std::string result = SetAutoIndexPage(d_path, loc);
+    else if (stat(d_path.c_str(), &sb) == 0 && S_ISDIR(sb.st_mode)) {
+        result = SetAutoIndexPage(d_path, loc, config);
+    }
     if (result.empty())
         throw (std::runtime_error("404 Error Dirread"));
     _body = result;
     _status = "HTTP/1.1 200 OK\r\n";
-    std::pair<std::string, std::string> type("Content-Type:", "*/*");
+    std::pair<std::string, std::string> type("Content-Type:", "text/html");
     std::pair<std::string, std::string> length("Content-Length:", return_file_length(_body.size()));
     _headers.insert(type);
     _headers.insert(length);
 }
 
-std::string SetAutoIndexPage(std::string d_path, ConfigLocation& loc)
+std::string SetAutoIndexPage(std::string d_path, ConfigLocation& loc, ConfigServer &config)
 {
     std::string head = "<html>\n<head>\n\t<title>Index of " + loc.GetPath() + "</title>\n<head>\n";
     std::string topBody = "<body>\n\t<h1>Index of " + loc.GetPath() + "</h1>\n\t<hr>\n\t<pre>\n";
@@ -285,15 +290,22 @@ std::string SetAutoIndexPage(std::string d_path, ConfigLocation& loc)
         return (std::string());
 
     struct dirent *dp;
+    std::string domain = "http://" + config.GetServerName() + ":" + config.GetPortStr();
+    std::string path = d_path.substr(loc.GetRoot().size());
+    if (path.back() != '/')
+        path.append("/");
     while ((dp = readdir(dir)) != NULL) {
         std::string name = dp->d_name;
+        if (name == ".")
+            continue ;
         if (dp->d_type == DT_REG) {
-            std::string line = "\t\t<a href=\"http://localhost:8080" + loc.GetPath() +  + "/" + name + "\">" + name + "</a>\n";
+            std::string line = "\t\t<a href=\"" + domain + path  + name + "\">" + name + "</a>\n";
             href.push_back(line);
         }
-        // if (dp->d_type == DT_DIR)
-            // std::cout << "DIRECTORY" << std::endl;
-        // std::cout << "LENGTH: " << dp->d_reclen << std::endl;
+        if (dp->d_type == DT_DIR) {
+            std::string line = "\t\t<a href=\"" + domain + path + name + "\">" + name + "/</a>\n";
+            href.push_back(line);
+        }
     }
     closedir(dir);
     std::string body = head + topBody;

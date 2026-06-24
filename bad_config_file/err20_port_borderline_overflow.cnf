@@ -1,0 +1,18 @@
+# ERREUR : port exactement a 65536 (maximum valide = 65535)
+# Un seul de trop — doit etre rejete, meme si err05 utilise 99999.
+# Ce cas teste la borne stricte de la plage [0, 65535].
+
+server {
+    listen 65536;
+    server_name localhost;
+    root ./var/www/html;
+    index index.html;
+    client_max_body_size 1048576;
+
+    error_page 404 ./var/www/errors/404.html;
+
+    location / {
+        methods GET;
+        autoindex off;
+    }
+}

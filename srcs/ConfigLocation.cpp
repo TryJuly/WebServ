@@ -3,14 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigLocation.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
+/*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 09:35:48 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/16 12:03:18 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/22 09:44:52 by seully           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../header/ConfigLocation.hpp"
+
+/*	Default	*/
 
 ConfigLocation::ConfigLocation()
 {
@@ -22,10 +24,7 @@ ConfigLocation::ConfigLocation()
 }
 
 ConfigLocation::ConfigLocation(ConfigLocation const &copy)
-{
-	(*this) = copy;
-	return ;
-}
+{ (*this) = copy; return ; }
 
 ConfigLocation::~ConfigLocation()
 { return ; }
@@ -34,12 +33,12 @@ ConfigLocation&	ConfigLocation::operator=(ConfigLocation const &copy)
 {
 	if (this != &copy) {
 		_cgi = copy._cgi;
+		_get = copy._get;
 		_path = copy._path;
 		_root = copy._root;
+		_post = copy._post;
 		_index = copy._index;
 		_redir = copy._redir;
-		_get = copy._get;
-		_post = copy._post;
 		_delete = copy._delete;
 		_autoindex = copy._autoindex;
 		_uploadPath = copy._uploadPath;
@@ -91,22 +90,16 @@ std::map<std::string, std::string>	&ConfigLocation::GetCGIMap()
 /*	SETTER*/
 
 void	ConfigLocation::SetPath(std::string const &str)
-{
-	_path = str;
-	return ;
-}
+{ _path = str; return ; }
 
 void	ConfigLocation::SetRoot(std::string const &str)
-{
-	_root = str;
-	return ;
-}
+{ _root = str; return ; }
 
 void	ConfigLocation::Setindex(std::string const &str)
-{
-	_index = str;
-	return ;
-}
+{ _index = str; return ; }
+
+void	ConfigLocation::SetUpload(std::string const &str)
+{ _uploadPath = str; return ; }
 
 void	ConfigLocation::SetAutoIndex(std::string &value)
 {
@@ -125,17 +118,10 @@ void	ConfigLocation::SetRedir(std::string const &str)
 	if (endKey == std::string::npos)
 			throw (std::invalid_argument("Error: Invalid syntax line: " + str));
 	std::string val = GetRoot() + str.substr(endKey + 1, str.size() - endKey);
-	//		ADD
 	struct stat st;
 	if (stat(val.c_str(), &st) != 0)
 		throw (std::invalid_argument("Error: Invalid path location: " + val));
 	_redir = str.substr(endKey + 1, str.size() - endKey);
-	return ;
-}
-
-void	ConfigLocation::SetUpload(std::string const &str)
-{
-	_uploadPath = str;
 	return ;
 }
 
@@ -181,7 +167,7 @@ void	ConfigLocation::SetCGI(std::string const &value)
 
 	std::string key = value.substr(0, endKey);
 	std::string val = value.substr(endKey + 1, value.size() - endKey);
-	// ADD
+
 	if (key.compare(".py") && key.compare(".php"))
 		throw (std::invalid_argument("Error: Cgi not handle: " + key));
 	struct stat st;

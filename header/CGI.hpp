@@ -3,30 +3,30 @@
 /*                                                        :::      ::::::::   */
 /*   CGI.hpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
+/*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/02 15:37:00 by seully            #+#    #+#             */
-/*   Updated: 2026/06/18 10:41:06 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/22 08:53:03 by seully           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef CGI_HPP
 # define CGI_HPP
 
-#include <ctime>
 # include <map>
+# include <ctime>
 # include <string>
 # include <cerrno>
+# include <fcntl.h>
 # include <cstddef>
 # include <cstring>
 # include <fstream>
+# include <signal.h>
 # include <unistd.h>
 # include <stdexcept>
 # include <sys/wait.h>
 # include "ConfigServer.hpp"
 # include "ConfigLocation.hpp"
-#include <fcntl.h>
-#include <signal.h>
 
 # define RED     "\033[31m"      /* Red */
 # define GREEN   "\033[32m"      /* Green */
@@ -44,27 +44,26 @@ class CGI
 		~CGI();
 		CGI&	operator=(CGI const &copy);
 
-		// std::string	Execute(ConfigLocation const &config);
-		void	ParseFirstLine(std::string const &request);
-		void	ParseHeaders(std::string const &request);
-		void	SetEnvpCGI(ConfigLocation const &config);
-		void	SetTimeStart(std::time_t time);
 		ssize_t	GetBodySize( void );
+		void	SetTimeStart(std::time_t time);
+		void	ParseHeaders(std::string const &request);
+		void	ParseFirstLine(std::string const &request);
+		void	SetEnvpCGI(ConfigLocation const &config, ConfigServer &configServer);
 
-		void	LaunchCGI(ConfigLocation const &config);
+		void	LaunchCGI(ConfigLocation const &config, ConfigServer &configServer);
 
 		pid_t	GetPidCgi();
 		int		GetPipeFd();
 
 	private:
-		std::map<std::string, std::string>	_stock;
-		std::string	_inter;
-		std::string	_scriptPath;
-		char	**_envp;
-		std::time_t	_cgiStart;
-
 		pid_t	_pid;
+		char	**_envp;
 		int		_pipeFd;
+		std::string	_inter;
+		std::time_t	_cgiStart;
+		std::string	_scriptPath;
+		std::map<std::string, std::string>	_stock;
+
 };
 
 void	ClearSpace(std::string &str);

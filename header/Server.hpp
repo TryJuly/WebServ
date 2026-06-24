@@ -6,7 +6,7 @@
 /*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 14:34:40 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/15 21:05:28 by seully           ###   ########.fr       */
+/*   Updated: 2026/06/22 09:18:37 by seully           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@
 # include <poll.h>
 # include <string>
 # include <vector>
+# include <fcntl.h>
 # include <errno.h>
 # include <cstdlib>	// std::atoi
 # include <cstring>	// strncmp
@@ -25,13 +26,13 @@
 # include <sys/stat.h>
 # include <sys/socket.h>
 # include <netinet/in.h>
-# include "Client.hpp"
-# include "ConfigServer.hpp"
-# include "CGI.hpp"
-#include "Request.hpp"
-#include <fcntl.h>
 
-# define MAX_EVENTS 200
+# include "CGI.hpp"
+# include "Client.hpp"
+# include "Request.hpp"
+# include "ConfigServer.hpp"
+
+// # define MAX_EVENTS 200
 # define RED     "\033[31m"      /* Red */
 # define GREEN   "\033[32m"      /* Green */
 # define YELLOW  "\033[33m"      /* Yellow */
@@ -43,20 +44,20 @@ class Server
 	public:
 		/*	Default	*/
 		Server();
+		~Server();
 		Server(int ac, char **av);
 		Server(Server const &copy);
-		~Server();
 		Server&	operator=(Server const &copy);
 
 		/*	Set Up Config Server	*/
-		void	SetUpServer();
-		void	CleanSetError();
-		void	CheckConfigServer();
+		void	SetUpServer( void );
+		void	CleanSetError( void );
+		void	CheckConfigServer( void );
 		void	ParseConfig(std::vector<std::string> &fileArray);
 
 		/*	Starting Part	*/
-		void	StopServer();
-		void	StartServer();
+		void	StopServer( void );
+		void	StartServer( void );
 		bool	IsSocketServer(int fd);
 		void	AcceptClient(int fd, int idClient);
 
@@ -68,14 +69,16 @@ class Server
 		/*	Get Private Attribute	*/
 		int	GetIndexClient(int fd);
 		int	GetNumberConfig( void );
+		int	GetClientByPipe(int fd);
 		ConfigServer	&GetConfigServer( int index);
+
+		/*	Function	*/
 		bool	IsCgiEvent(int fd);
-		int 	GetClientByPipe(int fd);
-		void	HandleCgiRequest(ConfigServer &config, Request const &req, int indexClient);
-		
 		void	SendCgiResponse(int i);
 		void	CheckTimeoutClient( void );
 		void	CatchClientRequest(int i, int &NbClient);
+		int		FindClientByCookie(std::string const &cookie);
+		void	HandleCgiRequest(ConfigServer &config, Request const &req, int indexClient);
 
 	private:
 		int	_numberConfig;
