@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
+/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 14:38:06 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/23 09:59:45 by seully           ###   ########.fr       */
+/*   Updated: 2026/06/25 11:08:06 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -259,7 +259,18 @@ void	Server::SendCgiResponse(int i)
 			HelpCgiResponse(response);
 			if (_client[indexClient].GetCookie().empty())
 				AddCookieSession(response, _client[indexClient]);
-			write(_client[indexClient].GetFd(), response.c_str(), response.size());
+			int bytes = write(_client[indexClient].GetFd(), response.c_str(), response.size());
+			if (bytes <= 0) {
+				for (size_t j = 0; j < _fds.size(); j++) {
+					if (_fds[j].fd == _client[indexClient].GetFd()) {
+						close(_fds[j].fd);
+						_fds.erase(_fds.begin() + j);
+						break ;
+					}
+				}
+				_client.erase(_client.begin() + indexClient);
+				return ;
+			}
 			close(_fds[i].fd);
 			int status;
 			waitpid(_client[indexClient].GetPidCgi(), &status, WNOHANG);	// ADD
@@ -284,7 +295,18 @@ void	Server::SendCgiResponse(int i)
 		int error = std::strtol(stringError.c_str(), NULL, 10);
 		ConfigServer &config = _configServer[_client[indexClient].GetIndexConfigServer()];
 		std::string response = SendErrorPage(config, error);
-		write(_fds[i].fd, response.c_str(), response.size());
+		int bytes = write(_fds[i].fd, response.c_str(), response.size());
+		if (bytes <= 0) {
+			for (size_t	j = 0; j < _client.size(); j++) {
+				if (_client[j].GetFd() == _fds[i].fd) {
+					_client.erase(_client.begin() + j);
+					break ;
+				}
+			}
+			close(_fds[i].fd);
+			_fds.erase(_fds.begin() + i);
+			return ;
+		}
 		_client[indexClient].ResetRequest();
 		_client[indexClient].CleanCgiResponse();
 		_client[indexClient].SetTime(std::time(NULL));
@@ -357,6 +379,7 @@ void	Server::CatchClientRequest(int i, int &NbClient)
 		else {
 			buff[bytes] = '\0';
 			_client[indexClient].FillRequestClient(buff);
+			// std::cout << GREEN << buff << RESET << std::endl;
 			if (_client[indexClient].ClientRequestIsReady() == false)
 				return ;
 			std::cout << "###	Client Message:	###\n" << std::endl;
@@ -388,7 +411,19 @@ void	Server::CatchClientRequest(int i, int &NbClient)
 				std::string response = rep.printResponse();
 				if (cookie.empty())
 					AddCookieSession(response, _client[indexClient]);
-				write(_client[indexClient].GetFd(), response.c_str(), response.size());
+				int bytes = write(_client[indexClient].GetFd(), response.c_str(), response.size());
+				if (bytes <= 0) {
+					for (size_t	i = 0; i < _fds.size(); i++) {
+						if (_fds[i].fd == _client[indexClient].GetFd()) {
+							close(_fds[i].fd);
+							_fds.erase(_fds.begin() + i);
+							break ;
+						}
+					}
+					_client.erase(_client.begin() + indexClient);
+					NbClient--;
+					return ;
+				}
 				std::cout << _client[indexClient].GetFd() << std::endl;
 			}
 			_client[indexClient].ResetRequest();
@@ -401,7 +436,18 @@ void	Server::CatchClientRequest(int i, int &NbClient)
 		int error = std::strtol(stringError.c_str(), NULL, 10);
 		ConfigServer &config = _configServer[_client[indexClient].GetIndexConfigServer()];
 		std::string response = SendErrorPage(config, error);
-		write(_fds[i].fd, response.c_str(), response.size());
+		int bytes = write(_fds[i].fd, response.c_str(), response.size());
+		if (bytes <= 0) {
+			for (size_t	j = 0; j < _client.size(); j++) {
+				if (_client[j].GetFd() == _fds[i].fd) {
+					_client.erase(_client.begin() + j);
+					break ;
+				}
+			}
+			close(_fds[i].fd);
+			_fds.erase(_fds.begin() + i);
+			return ;
+		}
 		_client[indexClient].CleanCgiResponse();
 		_client[indexClient].ResetRequest();
 		_client[indexClient].SetTime(std::time(NULL));
@@ -449,7 +495,19 @@ void	Server::CheckTimeoutClient( void )
 			close(pipeFd);
 			ConfigServer	&config = _configServer[_client[k].GetIndexConfigServer()];
 			std::string response = SendErrorPage(config, 504);
-			write(_client[k].GetFd(), response.c_str(), response.size());
+			int bytes = write(_client[k].GetFd(), response.c_str(), response.size());
+			if (bytes <= 0) {
+				for (size_t	i = 0; i < _fds.size(); i++) {
+					if (_fds[i].fd == _client[k].GetFd()) {
+						close(_fds[i].fd);
+						_fds.erase(_fds.begin() + i);
+						break ;
+					}
+				}
+				_client.erase(_client.begin() + k);
+				k--;
+				continue ;
+			}
 			_client[k].SetIsCgi(false);
 		}
 	}
@@ -509,9 +567,6 @@ void	Server::ParseConfig(std::vector<std::string> &fileArray)
 				throw (std::invalid_argument("Error: Invalid syntax in config file."));
 			ConfigServer conf;
 			_configServer.push_back(conf);
-
-			// for (size_t	h = 0; h < serverChunk.size(); h++)
-			// 	std::cout << GREEN << serverChunk[h] << RESET << std::endl;
 
 			_configServer[index].FillConfigServer(serverChunk);
 			index++;
