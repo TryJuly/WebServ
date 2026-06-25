@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CGI.cpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
+/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/02 15:35:11 by seully            #+#    #+#             */
-/*   Updated: 2026/06/22 08:59:00 by seully           ###   ########.fr       */
+/*   Updated: 2026/06/25 10:19:51 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -217,8 +217,17 @@ void	CGI::LaunchCGI(ConfigLocation const &config, ConfigServer &configServer)
 	else {
 		std::map<std::string, std::string>::iterator it = _stock.find("Body");
 		close(pipeIn[0]);
-		if (it != _stock.end())
-			write(pipeIn[1], it->second.c_str(), it->second.size());
+		if (it != _stock.end()) {
+			int bytes = write(pipeIn[1], it->second.c_str(), it->second.size());
+			if (bytes <= 0) {
+				close(pipeIn[1]);
+				close(pipeOut[0]);
+				close(pipeOut[1]);
+				kill(_pid, SIGKILL);
+				waitpid(_pid, NULL, 0);
+				throw (std::runtime_error("500 Error: child process"));
+			}
+		}
 		close(pipeIn[1]);
 		close(pipeOut[1]);
 		fcntl(pipeOut[0], F_SETFL, O_NONBLOCK);

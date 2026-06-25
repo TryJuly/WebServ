@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
+/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 13:12:35 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/22 09:15:12 by seully           ###   ########.fr       */
+/*   Updated: 2026/06/25 11:34:52 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -151,12 +151,33 @@ void	Client::ResetRequest( void )
 { _request.clear(); return ; }
 
 void	Client::FillRequestClient(std::string const &str)
-{ _request = _request + str; return ; }
+{
+	std::string req = _request;
+	_request = req + str;
+	return ; 
+	}
 
 bool	Client::ClientRequestIsReady( void )
 {
 	size_t	contentLength = _request.find("Content-Length:");
 	size_t	tranferEncoding = _request.find("Transfer-Encoding: chunked");
+	size_t	contentType = _request.find("Content-Type:");
+	if (contentType != std::string::npos) {
+		std::string line = _request.substr(contentType, _request.find(contentType, '\n') - contentType);
+		std::
+		size_t	boundary = _request.find("boundary=");
+		if (boundary != std::string::npos) {
+			size_t	p1 = line.find("=") + 1;
+			size_t	p2 = line.find_first_of("\r\n");
+			if (p1 == std::string::npos || p2 == std::string::npos)
+				throw (std::runtime_error("500 Error: parsing request"));
+			std::string delimiter = line.substr(p1, p2 - p1 - 1);
+			line.append("--");
+			size_t	endOfBody = _request.find(delimiter);
+			if (endOfBody != std::string::npos)
+				return (true);
+		}
+	}
 	if (contentLength != std::string::npos) {
 		size_t	posEnd = _request.find("\r\n", contentLength);
 		std::string line = _request.substr(contentLength, posEnd - contentLength);
@@ -175,6 +196,7 @@ bool	Client::ClientRequestIsReady( void )
 		else
 			bodyStart += 4;
 		std::string	body = _request.substr(bodyStart);
+		std::cout << RED << "BODY: " << body << " " << bodyLength << RESET << std::endl;
 		if (static_cast<long>(body.size()) >= bodyLength)
 			return (true);
 	}
