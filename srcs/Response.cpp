@@ -124,7 +124,7 @@ void Response::sendLocIndex(ConfigServer& config, ConfigLocation& loc) {
 
 void Response::multipart(std::map<std::string, std::string>::iterator c_type, Request& req, ConfigServer& config, std::string upload_path) {
     std::string delimiter = "--" + c_type->second.substr(c_type->second.find("boundary=") + 9);
-    std::string end_delim = delimiter.substr(2) + "--";
+    std::string end_delim = delimiter + "--";
 
     std::string req_body = req.getBody();
 
@@ -133,8 +133,11 @@ void Response::multipart(std::map<std::string, std::string>::iterator c_type, Re
     size_t pos = 0;
     while (req_body.find(delimiter, pos) != std::string::npos) {
         std::string part = req_body.substr(pos, req_body.find(delimiter, pos + 1) - pos);
+        std::cout << part << std::endl;
         parts.push_back(part);
-        pos += req_body.find(delimiter, pos + 1);
+        if (req_body.find(delimiter, pos + 1) == req_body.find(end_delim))
+            break ;
+        pos = req_body.find(delimiter, pos + 1);
     }
 
     std::string first_loc = "";
