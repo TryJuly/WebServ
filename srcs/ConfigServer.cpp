@@ -6,11 +6,12 @@
 /*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 08:36:43 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/23 09:37:53 by seully           ###   ########.fr       */
+/*   Updated: 2026/06/27 11:13:10 by seully           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../header/ConfigServer.hpp"
+#include <cstddef>
 #include <stdexcept>
 
 static char	GetIdentifier(std::string &str);
@@ -108,6 +109,7 @@ ConfigServer&	ConfigServer::operator=(ConfigServer const &copy)
 {
 	if (this != &copy) {
 		_port = copy._port;
+		_host = copy._host;
 		_index = copy._index;
 		_socket = copy._socket;
 		_portStr = copy._portStr;
@@ -171,16 +173,13 @@ void	ConfigServer::FillConfigServer(std::vector<std::string> &serverChunk)
 		checkDouble.insert(path);
 
 		int	indexConfigLocation = FindLocationPath(path);
-		if (indexConfigLocation == -1) {
-			ConfigLocation conf;
-			AddConfigLocation(conf);
+		if (indexConfigLocation != -1)
+			_locations.erase(_locations.begin() + indexConfigLocation);
+		ConfigLocation conf;
+		AddConfigLocation(conf);
+		FillConfigLocation(_locations.back(), locationChunk, path);
+		if (_locations.back().GetRoot().empty())
 			_locations.back().SetRoot(GetRoot());
-			FillConfigLocation(_locations.back(), locationChunk, path);
-		}
-		else {
-			_locations[indexConfigLocation].SetRoot(GetRoot());
-			FillConfigLocation(_locations[indexConfigLocation], locationChunk, path);
-		}
 		locationChunk.clear();
 		start = end;
 	}
@@ -190,6 +189,9 @@ void	ConfigServer::FillConfigServer(std::vector<std::string> &serverChunk)
 
 int	ConfigServer::GetPort()
 { return (_port); }
+
+std::string	ConfigServer::GetHost( void )
+{ return (_host); }
 
 int	ConfigServer::GetSocket()
 { return (_socket); }
@@ -235,11 +237,17 @@ std::string	ConfigServer::GetErrorPages(int number)
 void	ConfigServer::SetPort(int port)
 { _port = port; return ; }
 
+void	ConfigServer::SetHost(std::string host)
+{ _host = host; return ; }
+
 void	ConfigServer::SetSocket(int socket)
 { _socket = socket; return ; }
 
 void	ConfigServer::SetMaxBodySize(int BodySize)
 { _maxBodySize = BodySize; return ; }
+
+void	ConfigServer::SetSockAddr(struct sockaddr_in ptr)
+{ _sockAddress = ptr; return ;}
 
 void	ConfigServer::SetRoot(std::string const &rootPath)
 { _rootPath = rootPath; return ; }
@@ -289,7 +297,6 @@ void	ConfigServer::SetConfigServer(std::string &str, char iD)
 {
 	size_t	start = str.find_first_of(" \t");
 	size_t	end = str.find(';');
-	// std::set<std::string >	checkConfigMin;
 
 	if (end == std::string::npos)
 			throw (std::invalid_argument("Error: Missing `;' end of line: " + str));
@@ -301,25 +308,27 @@ void	ConfigServer::SetConfigServer(std::string &str, char iD)
 	switch (iD) {
 		case 'L': {
 			char *endptr;
-			long port = std::strtol(value.c_str(), &endptr, 10);
+			size_t	pos = value.find(":");
+			if (pos == std::string::npos)
+				throw (std::invalid_argument("Error: Invalid syntax listen."));
+			std::string portStr = value.substr(pos + 1);
+
+			long port = std::strtol(portStr.c_str(), &endptr, 10);
 			if (*endptr != '\0' || port < 0 || port > 65535)
 				throw (std::invalid_argument("Error: Invalid port value: " + value));
 			SetPort(port);
-			SetPortStr(value);
-			// checkConfigMin.insert("listen");
+			SetHost(value.substr(0, pos));
+			SetPortStr(portStr);
 			break ;
 		}
 		case 'S':
 			SetServerName(value);
-			// checkConfigMin.insert("server_name");
 			break ;
 		case 'R':
 			SetRoot(value);
-			// checkConfigMin.insert("root");
 			break ;
 		case 'I':
 			SetIndex(value);
-			// checkConfigMin.insert("index");
 			break ;
 		case 'C': {
 			char *endptr;
@@ -327,36 +336,18 @@ void	ConfigServer::SetConfigServer(std::string &str, char iD)
 			if (*endptr != '\0' || size < 0 || size > 2147483647)
 				throw (std::invalid_argument("Error: Invalid body size value: " + value));
 			SetMaxBodySize(size);
-			// checkConfigMin.insert("client_max_body_size");
 			break ;
 		}
 		case 'E':
 			SetErrorPages(value);
-			// checkConfigMin.insert("error_page");
 			break ;
 		default:
 			break;
 	}
-	// ValidConfigMini(checkConfigMin);
 	return ;
 }
 
 /*	Statique function	*/
-
-// static void	ValidConfigMini(std::set<std::string> &checkConfigMin)
-// {
-// 	if (checkConfigMin.count("client_max_body_size") != 1)
-// 		throw (std::invalid_argument("Error: Missing line -> client_max_body_size ‘value'."));
-// 	if (checkConfigMin.count("listen") != 1)
-// 		throw (std::invalid_argument("Error: Missing line -> listen ‘value'."));
-// 	if (checkConfigMin.count("server_name") != 1)
-// 		throw (std::invalid_argument("Error: Missing line -> server_name ‘value'."));
-// 	if (checkConfigMin.count("root") != 1)
-// 		throw (std::invalid_argument("Error: Missing line -> root ‘value'."));
-// 	if (checkConfigMin.count("index") != 1)
-// 		throw (std::invalid_argument("Error: Missing line -> index ‘value'."));
-// 	return ;
-// }
 
 static void	FillConfigLocation(ConfigLocation &config, std::vector<std::string> &locationChunk, std::string &path)
 {
@@ -484,18 +475,16 @@ static void	ServerPart(std::vector<std::string> &serverBloc, ConfigServer &confi
 
 static void	CheckConfigRequired(std::set<char> &checkDoube)
 {
-	for (size_t	i = 0; i < checkDoube.size(); i++) {
-		if (checkDoube.count('L') < 1)
-			throw (std::invalid_argument("Error: Missing `listen' instructions."));
-		if (checkDoube.count('S') < 1)
-			throw (std::invalid_argument("Error: Missing `server_name' instructions."));
-		if (checkDoube.count('R') < 1)
-			throw (std::invalid_argument("Error: Missing `root' instructions."));
-		if (checkDoube.count('I') < 1)
-			throw (std::invalid_argument("Error: Missing `index' instructions."));
-		if (checkDoube.count('C') < 1)
-			throw (std::invalid_argument("Error: Missing `client_max_body_size' instructions."));
-	}
+	if (checkDoube.count('L') < 1)
+		throw (std::invalid_argument("Error: Missing `listen' instructions."));
+	if (checkDoube.count('S') < 1)
+		throw (std::invalid_argument("Error: Missing `server_name' instructions."));
+	if (checkDoube.count('R') < 1)
+		throw (std::invalid_argument("Error: Missing `root' instructions."));
+	if (checkDoube.count('I') < 1)
+		throw (std::invalid_argument("Error: Missing `index' instructions."));
+	if (checkDoube.count('C') < 1)
+		throw (std::invalid_argument("Error: Missing `client_max_body_size' instructions."));
 	return ;
 }
 

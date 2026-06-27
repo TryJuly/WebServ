@@ -790,7 +790,7 @@ def test_upload_cycle():
         return
 
     sub("Vérification du fichier sur le disque (upload_path = ./var/www)")
-    upload_root = os.path.join(WEBSERV_DIR, "var", "www")
+    upload_root = os.path.join(WEBSERV_DIR, "var", "www", "uploads")
     recent = []
     for fname in os.listdir(upload_root):
         p = os.path.join(upload_root, fname)

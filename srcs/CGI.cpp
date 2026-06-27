@@ -21,7 +21,7 @@ static std::string	UrlDecode(std::string const &url);
 
 /*	Default	*/
 
-CGI::CGI()
+CGI::CGI() : _pid(-1), _envp(NULL), _pipeFd(-1), _pipeInFd(-1)
 { return ; }
 
 CGI::CGI(std::string const &request)
@@ -123,6 +123,7 @@ CGI&	CGI::operator=(CGI const &copy)
 		_cgiStart = copy._cgiStart;
 		_pid = copy._pid;
 		_pipeFd = copy._pipeFd;
+		_pipeInFd = copy._pipeInFd;
 	}
 	return (*this);
 }
@@ -215,20 +216,9 @@ void	CGI::LaunchCGI(ConfigLocation const &config, ConfigServer &configServer)
 		exit(1);
 	}
 	else {
-		std::map<std::string, std::string>::iterator it = _stock.find("Body");
 		close(pipeIn[0]);
-		if (it != _stock.end()) {
-			int bytes = write(pipeIn[1], it->second.c_str(), it->second.size());
-			if (bytes <= 0) {
-				close(pipeIn[1]);
-				close(pipeOut[0]);
-				close(pipeOut[1]);
-				kill(_pid, SIGKILL);
-				waitpid(_pid, NULL, 0);
-				throw (std::runtime_error("500 Error: child process"));
-			}
-		}
-		close(pipeIn[1]);
+		fcntl(pipeIn[1], F_SETFL, O_NONBLOCK);
+		_pipeInFd = pipeIn[1];
 		close(pipeOut[1]);
 		fcntl(pipeOut[0], F_SETFL, O_NONBLOCK);
 		_pipeFd = pipeOut[0];
@@ -252,6 +242,17 @@ pid_t	CGI::GetPidCgi()
 
 int		CGI::GetPipeFd()
 { return (_pipeFd); }
+
+int		CGI::GetPipeInFd()
+{ return (_pipeInFd); }
+
+std::string	CGI::GetCgiBody()
+{
+	std::map<std::string, std::string>::iterator it = _stock.find("Body");
+	if (it == _stock.end())
+		return ("");
+	return (it->second);
+}
 
 /*	Setter	*/
 

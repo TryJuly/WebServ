@@ -6,7 +6,7 @@
 /*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/25 12:51:30 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/22 09:32:02 by seully           ###   ########.fr       */
+/*   Updated: 2026/06/27 09:09:34 by seully           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,6 +47,7 @@ class ConfigServer
 		int	GetNumberLocation(void);
 
 		std::string&	GetRoot( void );
+		std::string		GetHost( void );
 		std::string&	GetIndex( void );
 		sockaddr_in&	GetSockAddr(void);
 		std::string		GetPortStr( void );
@@ -59,9 +60,11 @@ class ConfigServer
 
 		void	SetPort(int port);
 		void	SetSocket(int socket);
+		void	SetHost(std::string host);
 		void	SetPortStr(std::string port);
 		void	SetMaxBodySize(int BodySize);
 		void	SetIndex(std::string const &index);
+		void	SetSockAddr(struct sockaddr_in ptr);
 		void	SetRoot(std::string const &rootPath);
 		void	SetErrorPages(std::string errorPage);
 		void	SetServerName(std::string const &ServerName);
@@ -78,8 +81,10 @@ class ConfigServer
 		int	_port;
 		int	_socket;
 		int	_maxBodySize;
-		std::string	_index;
 		int	_numberLocation;
+
+		std::string	_host;
+		std::string	_index;
 		std::string	_portStr;
 		std::string	_rootPath;
 		std::string	_serverName;

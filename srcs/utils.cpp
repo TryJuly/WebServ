@@ -69,17 +69,25 @@ std::string MimeType(std::string const &path)
 	if (pos == std::string::npos)
 		return ("application/octet-stream");
 	std::string ext = path.substr(pos);
-	if (ext == ".html" || ext == "htm")
+	if (ext == ".html" || ext == ".htm")
 		return ("text/html");
 	if (ext == ".css")
-		return ("test/css");
+		return ("text/css");
 	if (ext == ".js")
 		return ("application/javascript");
 	if (ext == ".png")
 		return ("image/png");
-	if (ext == ".jpg")
-		return ("image.jpg");
+	if (ext == ".jpg" || ext == ".jpeg")
+		return ("image/jpeg");
+	if (ext == ".gif")
+		return ("image/gif");
 	if (ext == ".ico")
 		return ("image/x-icon");
+	if (ext == ".svg")
+		return ("image/svg+xml");
+	if (ext == ".pdf")
+		return ("application/pdf");
+	if (ext == ".json")
+		return ("application/json");
 	return ("application/octet-stream");
 }

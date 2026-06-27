@@ -6,7 +6,7 @@
 /*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 09:35:48 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/22 09:44:52 by seully           ###   ########.fr       */
+/*   Updated: 2026/06/26 11:17:51 by seully           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -117,10 +117,6 @@ void	ConfigLocation::SetRedir(std::string const &str)
 	size_t	endKey = str.find_first_of(" \t");
 	if (endKey == std::string::npos)
 			throw (std::invalid_argument("Error: Invalid syntax line: " + str));
-	std::string val = GetRoot() + str.substr(endKey + 1, str.size() - endKey);
-	struct stat st;
-	if (stat(val.c_str(), &st) != 0)
-		throw (std::invalid_argument("Error: Invalid path location: " + val));
 	_redir = str.substr(endKey + 1, str.size() - endKey);
 	return ;
 }

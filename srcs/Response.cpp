@@ -36,6 +36,7 @@ Response::Response( Request& req, ConfigServer& config) {
     //GET method
     else if (req.getMethod() == "GET") {
         getResponse(req, config);
+        
         return;
     }
     //OTHERS
@@ -84,24 +85,29 @@ void Response::getResponse(Request& req, ConfigServer& config) {
         std::string root = loc.GetRoot();
         std::string f_path = root + path;
         struct stat sb;
-        if (stat(f_path.c_str(), &sb) != 0 || S_ISDIR(sb.st_mode)) {
-            if (loc.GetAutoIndex()) {
+        if (stat(f_path.c_str(), &sb) != 0) {
+            sendError(404, config);
+            return;
+        }
+        if (S_ISDIR(sb.st_mode)) {
+            if (loc.GetAutoIndex())
                 autoIndex(config, loc, f_path);
-                // sendIndex(config);
-            }
-            else if (loc.Getindex() != "") {
+            else if (loc.Getindex() != "")
                 sendLocIndex(config, loc);
-            }
             else
                 sendError(404, config);
             return;
         }
+        _body = extract_file(f_path.c_str());
+        if (_body.empty()) {
+            sendError(500, config);
+            return ;
+        }
         _status = "HTTP/1.1 200 OK\r\n";
-        std::pair<std::string, std::string> type("Content-Type:", "*/*");
+        std::pair<std::string, std::string> type("Content-Type:", MimeType(f_path));
         std::pair<std::string, std::string> length("Content-Length:", return_file_length(sb.st_size));
         _headers.insert(type);
         _headers.insert(length);
-        _body = extract_file(f_path.c_str());
     }
 }
 
@@ -114,12 +120,16 @@ void Response::sendLocIndex(ConfigServer& config, ConfigLocation& loc) {
         sendError(404, config);
         return ;
     }
+    _body = extract_file(f_path);
+    if (_body.empty()) {
+        sendError(500, config);
+        return ;
+    }
     _status = "HTTP/1.1 200 OK\r\n";
-    std::pair<std::string, std::string> type("Content-Type:", "*/*");
+    std::pair<std::string, std::string> type("Content-Type:", MimeType(f_path));
     std::pair<std::string, std::string> length("Content-Length:", return_file_length(sb.st_size));
     _headers.insert(type);
     _headers.insert(length);
-    _body = extract_file(f_path);
 }
 
 void Response::multipart(std::map<std::string, std::string>::iterator c_type, Request& req, ConfigServer& config, std::string upload_path) {
@@ -142,22 +152,26 @@ void Response::multipart(std::map<std::string, std::string>::iterator c_type, Re
 
     std::string first_loc = "";
     size_t  first_size = 0;
+    (void) first_size;
 
     for (unsigned int i = 0; i < parts.size(); i++) {
         size_t line_start = parts[i].find("Content-Disposition");
         std::string line = parts[i].substr(line_start + 21, parts[i].find("\n", line_start) - (line_start + 21));
         std::stringstream ss(line);
+        std::string token;
         std::string file;
         std::vector<std::string> v;
 
-        while(std::getline(ss, file, ' ')) {
-            v.push_back(file);
+        while(std::getline(ss, token, ' ')) {
+            v.push_back(token);
         }
         for (size_t i = 0; i < v.size(); i++) {
             ClearSpace(v[i]);
             if (v[i].find("filename=\"") != std::string::npos)
                 file = v[i].substr(v[i].find('=') + 2 , (v[i].size() - 2) - (v[i].find('=') + 2));
         }
+        if (file.empty())
+            continue ;
 
         std::string f_path = upload_path + "/" + file;
         std::cout << f_path << std::endl;
@@ -169,10 +183,22 @@ void Response::multipart(std::map<std::string, std::string>::iterator c_type, Re
             return ;
         }
 
-        std::ofstream ofs(f_path.c_str());
-    
+        std::ofstream ofs(f_path.c_str(), std::ios::binary);
+
         size_t body_pos = parts[i].find("\r\n\r\n");
-        std::string file_body = parts[i].substr(body_pos + 4, (parts[i].size()) - (parts[i].size() - parts[i].find(end_delim) + body_pos + 6));
+        if (body_pos == std::string::npos) {
+            sendError(400, config);
+            return ;
+        }
+        size_t data_start = body_pos + 4;
+        size_t data_end = parts[i].size();
+        if (data_end >= data_start + 2 && parts[i][data_end - 2] == '\r' && parts[i][data_end - 1] == '\n')
+            data_end -= 2;
+        if (data_end < data_start) {
+            sendError(400, config);
+            return ;
+        }
+        std::string file_body = parts[i].substr(data_start, data_end - data_start);
         ofs << file_body;
 
         if (first_loc == "") {
@@ -183,8 +209,10 @@ void Response::multipart(std::map<std::string, std::string>::iterator c_type, Re
         }
     }
     _status = "HTTP/1.1 201 Created\r\n";
-    std::pair<std::string, std::string> type("Content-Type:", "*/*");
-    std::pair<std::string, std::string> length("Content-Length:", return_file_length(first_size));
+    std::string responseBody = "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>Upload</title></head><body><h1>Upload successful</h1></body></html>";
+    std::pair<std::string, std::string> type("Content-Type:", "text/html");
+    std::pair<std::string, std::string> length("Content-Length:", return_file_length(responseBody.size()));
+    _body = responseBody;
     std::pair<std::string, std::string> location("Location: ", first_loc);
     _headers.insert(type);
     _headers.insert(length);
@@ -208,14 +236,13 @@ void Response::octetStream(Request& req, ConfigServer& config, std::string uploa
         return ;
     }
 
-    std::ofstream ofs(f_path.c_str());
-    
-    _body = req.getBody();
-    ofs << _body;
+    std::ofstream ofs(f_path.c_str(), std::ios::binary);
+    ofs << req.getBody();
     _status = "HTTP/1.1 201 Created\r\n";
-    std::pair<std::string, std::string> type("Content-Type:", "*/*");
-    stat(f_path.c_str(), &sb);
-    std::pair<std::string, std::string> length("Content-Length:", return_file_length(sb.st_size));
+    std::string responseBody = "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>Upload</title></head><body><h1>Upload successful</h1></body></html>";
+    std::pair<std::string, std::string> type("Content-Type:", "text/html");
+    std::pair<std::string, std::string> length("Content-Length:", return_file_length(responseBody.size()));
+    _body = responseBody;
     _headers.insert(type);
     _headers.insert(length);
 }
@@ -239,7 +266,9 @@ void Response::postResponse(Request& req, ConfigServer& config) {
 
     std::map<std::string, std::string> req_head = req.getHeaders();
     std::map<std::string, std::string>::iterator c_type = req_head.find("Content-Type");
-    
+    if (c_type == req_head.end())
+        throw std::runtime_error("415 ");
+
     if (c_type->second.find("multipart/form-data") != std::string::npos) {
         multipart(c_type, req, config, upload_path);
     }
@@ -301,7 +330,7 @@ void    Response::autoIndex(ConfigServer& config, ConfigLocation& loc, std::stri
 
 std::string SetAutoIndexPage(std::string d_path, ConfigLocation& loc, ConfigServer &config)
 {
-    std::string head = "<html>\n<head>\n\t<title>Index of " + loc.GetPath() + "</title>\n<head>\n";
+    std::string head = "<html>\n<head>\n\t<title>Index of " + loc.GetPath() + "</title>\n</head>\n";
     std::string topBody = "<body>\n\t<h1>Index of " + loc.GetPath() + "</h1>\n\t<hr>\n\t<pre>\n";
     std::string endBody = "\t\t</pre>\n\t<hr>\n</body>\n</html>\n";
     std::vector<std::string>    href;
@@ -311,18 +340,19 @@ std::string SetAutoIndexPage(std::string d_path, ConfigLocation& loc, ConfigServ
 
     struct dirent *dp;
     std::string domain = "http://" + config.GetServerName() + ":" + config.GetPortStr();
-    std::string path = d_path.substr(loc.GetRoot().size());
-    if (*(path.end() - 1) != '/') // a la base , path.back() mais c++11.
+    size_t rootLen = loc.GetRoot().size();
+    std::string path = (rootLen <= d_path.size()) ? d_path.substr(rootLen) : d_path;
+    if (path.empty() || path[path.size() - 1] != '/')
         path.append("/");
     while ((dp = readdir(dir)) != NULL) {
         std::string name = dp->d_name;
-        if (name == ".")
+        if (name == "." || name == "..")
             continue ;
         if (dp->d_type == DT_REG) {
-            std::string line = "\t\t<a href=\"" + domain + path  + name + "\">" + name + "</a>\n";
+            std::string line = "\t\t<a href=\"" + domain + path + name + "\">" + name + "</a>\n";
             href.push_back(line);
         }
-        if (dp->d_type == DT_DIR) {
+        else if (dp->d_type == DT_DIR) {
             std::string line = "\t\t<a href=\"" + domain + path + name + "\">" + name + "/</a>\n";
             href.push_back(line);
         }
@@ -333,7 +363,6 @@ std::string SetAutoIndexPage(std::string d_path, ConfigLocation& loc, ConfigServ
         body.append(href[i]);
     }
     body.append(endBody);
-    std::cout << body << std::endl;
     return (body);
 }
 
@@ -346,12 +375,16 @@ void Response::sendIndex(ConfigServer& config) {
         sendError(404, config);
         return ;
     }
+    _body = extract_file(f_path);
+    if (_body.empty()) {
+        sendError(500, config);
+        return ;
+    }
     _status = "HTTP/1.1 200 OK\r\n";
-    std::pair<std::string, std::string> type("Content-Type:", "*/*");
+    std::pair<std::string, std::string> type("Content-Type:", MimeType(f_path));
     std::pair<std::string, std::string> length("Content-Length:", return_file_length(sb.st_size));
     _headers.insert(type);
     _headers.insert(length);
-    _body = extract_file(f_path);
 }
 
 std::string Response::getStatus(void) const {
@@ -381,49 +414,64 @@ std::string Response::printResponse(void) {
 void Response::sendError(int status, ConfigServer& config) {
     std::string err_file;
     switch (status) {
-        
+        case 400:
+            err_file = config.GetErrorPages(status);
+            _status = "HTTP/1.1 400 Bad Request\r\n";
+            break ;
+        case 403:
+            err_file = config.GetErrorPages(status);
+            _status = "HTTP/1.1 403 Forbidden\r\n";
+            break ;
         case 404:
             err_file = config.GetErrorPages(status);
             _status = "HTTP/1.1 404 Not Found\r\n";
             break ;
-        
         case 405:
             err_file = config.GetErrorPages(status);
             _status = "HTTP/1.1 405 Method Not Allowed\r\n";
             break;
-
         case 409:
             err_file = config.GetErrorPages(status);
             _status = "HTTP/1.1 409 Conflict\r\n";
             break;
-        
+        case 413:
+            err_file = config.GetErrorPages(status);
+            _status = "HTTP/1.1 413 Content Too Large\r\n";
+            break ;
+        case 415:
+            err_file = config.GetErrorPages(status);
+            _status = "HTTP/1.1 415 Unsupported Media Type\r\n";
+            break ;
+        case 500:
+            err_file = config.GetErrorPages(status);
+            _status = "HTTP/1.1 500 Internal Server Error\r\n";
+            break ;
         default:
-            std::cout << "Error" << std::endl;
+            _status = "HTTP/1.1 500 Internal Server Error\r\n";
             break;
     }
-    struct stat sb;
-    stat(err_file.c_str(), &sb);
     std::pair<std::string, std::string> type("Content-Type:", "text/html");
-    std::pair<std::string, std::string> length("Content-Length:", return_file_length(sb.st_size));
     _headers.insert(type);
+    if (!err_file.empty()) {
+        _body = extract_file(err_file);
+        if (!_body.empty()) {
+            std::pair<std::string, std::string> length("Content-Length:", return_file_length(_body.size()));
+            _headers.insert(length);
+            return ;
+        }
+    }
+    _body = "";
+    std::pair<std::string, std::string> length("Content-Length:", "0");
     _headers.insert(length);
-    _body = extract_file(err_file);
 }
 
 std::string extract_file(std::string filename) {
-    std::ifstream ifs;
-    ifs.open(filename.c_str());
-    if (!(ifs.is_open())) {
+    std::ifstream ifs(filename.c_str(), std::ios::binary);
+    if (!ifs.is_open()) {
         std::cout << "Not good file extraction" << std::endl;
-        return ("NULL");
+        return ("");
     }
-    std::string body = "";
-    std::string line;
-    while (std::getline(ifs, line)) {
-        body.append(line);
-        body.append("\n");					
-    }
-    return (body);
+    return std::string((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
 }
 
 int loc_index(std::string path, ConfigServer& config) {
