@@ -6,13 +6,14 @@
 /*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 14:34:40 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/22 09:18:37 by seully           ###   ########.fr       */
+/*   Updated: 2026/06/27 11:15:56 by seully           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
+# include <map>
 # include <set>
 # include <poll.h>
 # include <string>
@@ -74,8 +75,12 @@ class Server
 
 		/*	Function	*/
 		bool	IsCgiEvent(int fd);
+		bool	IsCgiStdinEvent(int fd);
+		void	SendCgiBody(int i);
 		void	SendCgiResponse(int i);
 		void	CheckTimeoutClient( void );
+		int		GetClientByPipeIn(int fd);
+		void	WriteClientBuffer(int i, int &NbClient);
 		void	CatchClientRequest(int i, int &NbClient);
 		int		FindClientByCookie(std::string const &cookie);
 		void	HandleCgiRequest(ConfigServer &config, Request const &req, int indexClient);
@@ -86,6 +91,7 @@ class Server
 		std::vector<Client>	_client;
 		std::vector<struct pollfd>	_fds;
 		std::vector<ConfigServer>	_configServer;
+		std::map<int, std::vector<int> >	_socketToConfigs;
 
 };
 

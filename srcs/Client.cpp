@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
+/*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 13:12:35 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/25 11:34:52 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/26 06:59:13 by seully           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@ Client::Client()
 {
 	_fd = -1;
 	_pipeFd = -1;
+	_pipeInFd = -1;
 	_cgiPid = -1;
 	_cookie = "";
 	_isCgi = false;
@@ -33,6 +34,7 @@ Client::Client(int fd)
 {
 	_fd = fd;
 	_pipeFd = -1;
+	_pipeInFd = -1;
 	_cgiPid = -1;
 	_cookie = "";
 	_isCgi = false;
@@ -55,12 +57,15 @@ Client&	Client::operator=(Client const &copy)
 		_time = copy._time;
 		_isCgi = copy._isCgi;
 		_pipeFd = copy._pipeFd;
+		_pipeInFd = copy._pipeInFd;
 		_cookie = copy._cookie;
 		_cgiPid = copy._cgiPid;
 		_request = copy._request;
 		_idClient = copy._idClient;
 		_startCgi = copy._startCgi;
+		_cgiBody = copy._cgiBody;
 		_cgiResponse = copy._cgiResponse;
+		_writeBuffer = copy._writeBuffer;
 		_fdConfigServer = copy._fdConfigServer;
 		_indexConfigServer = copy._indexConfigServer;
 	}
@@ -93,6 +98,9 @@ void	Client::SetTime(std::time_t value)
 
 void	Client::SetPipeFd(int fd)
 { _pipeFd = fd; return ; }
+
+void	Client::SetPipeInFd(int fd)
+{ _pipeInFd = fd; return ; }
 
 void	Client::SetPidCgi(pid_t pid)
 { _cgiPid = pid; return ; }
@@ -129,6 +137,9 @@ pid_t	Client::GetPidCgi( void )
 int		Client::GetPipeFd( void )
 { return (_pipeFd); }
 
+int		Client::GetPipeInFd( void )
+{ return (_pipeInFd); }
+
 bool	Client::GetIsCgi( void )
 { return (_isCgi); }
 
@@ -150,12 +161,8 @@ void	Client::CloseFd( void )
 void	Client::ResetRequest( void )
 { _request.clear(); return ; }
 
-void	Client::FillRequestClient(std::string const &str)
-{
-	std::string req = _request;
-	_request = req + str;
-	return ; 
-	}
+void	Client::FillRequestClient(const char *buff, size_t bytes)
+{ _request.append(buff, bytes); return ; }
 
 bool	Client::ClientRequestIsReady( void )
 {
@@ -163,26 +170,32 @@ bool	Client::ClientRequestIsReady( void )
 	size_t	tranferEncoding = _request.find("Transfer-Encoding: chunked");
 	size_t	contentType = _request.find("Content-Type:");
 	if (contentType != std::string::npos) {
-		std::string line = _request.substr(contentType, _request.find(contentType, '\n') - contentType);
-		std::
-		size_t	boundary = _request.find("boundary=");
-		if (boundary != std::string::npos) {
-			size_t	p1 = line.find("=") + 1;
-			size_t	p2 = line.find_first_of("\r\n");
-			if (p1 == std::string::npos || p2 == std::string::npos)
-				throw (std::runtime_error("500 Error: parsing request"));
-			std::string delimiter = line.substr(p1, p2 - p1 - 1);
-			line.append("--");
-			size_t	endOfBody = _request.find(delimiter);
-			if (endOfBody != std::string::npos)
+		size_t	lineEnd = _request.find('\n', contentType);
+		if (lineEnd == std::string::npos)
+			return (false);
+		std::string line = _request.substr(contentType, lineEnd - contentType);
+		size_t	boundaryPos = line.find("boundary=");
+		if (boundaryPos != std::string::npos) {
+			size_t	p1 = boundaryPos + 9;
+			size_t	p2 = line.find_first_of("\r\n", p1);
+			if (p2 == std::string::npos)
+				p2 = line.size();
+			std::string boundary = line.substr(p1, p2 - p1);
+			std::string closeDelimiter = "--" + boundary + "--";
+			if (_request.find(closeDelimiter) != std::string::npos)
 				return (true);
 		}
 	}
 	if (contentLength != std::string::npos) {
 		size_t	posEnd = _request.find("\r\n", contentLength);
+		if (posEnd == std::string::npos)
+			return (false);
 		std::string line = _request.substr(contentLength, posEnd - contentLength);
 		size_t	startLength = line.find_first_of("0123456789");
+		if (startLength == std::string::npos)
+			throw (std::runtime_error("400 Error: Client Content-Length: "));
 		std::string strLength = line.substr(startLength);
+		errno = 0;
 		long bodyLength = std::strtol(strLength.c_str(), NULL, 10);
 		if (errno == ERANGE || bodyLength < 0)
 			throw (std::runtime_error("400 Error: Client Content-Length: "));
@@ -191,12 +204,14 @@ bool	Client::ClientRequestIsReady( void )
 		size_t	bodyStart = _request.find("\r\n\r\n");
 		if (bodyStart == std::string::npos) {
 			bodyStart = _request.find("\n\n");
+			if (bodyStart == std::string::npos)
+				return (false);
 			bodyStart += 2;
 		}
 		else
 			bodyStart += 4;
 		std::string	body = _request.substr(bodyStart);
-		std::cout << RED << "BODY: " << body << " " << bodyLength << RESET << std::endl;
+		// std::cout << RED << "BODY: " << body << " " << bodyLength << RESET << std::endl;
 		if (static_cast<long>(body.size()) >= bodyLength)
 			return (true);
 	}
@@ -218,3 +233,21 @@ void	Client::AppendCgiResponse(char *buff, int bytes)
 
 void	Client::CleanCgiResponse( void )
 { _cgiResponse.clear(); return ; }
+
+std::string	Client::GetCgiBody( void )
+{ return (_cgiBody); }
+
+void	Client::SetCgiBody(std::string const &body)
+{ _cgiBody = body; return ; }
+
+std::string	Client::GetWriteBuffer( void )
+{ return (_writeBuffer); }
+
+void	Client::SetWriteBuffer(std::string const &data)
+{ _writeBuffer = data; return ; }
+
+void	Client::AppendWriteBuffer(std::string const &data)
+{ _writeBuffer.append(data); return ; }
+
+void	Client::ClearWriteBuffer( void )
+{ _writeBuffer.clear(); return ; }

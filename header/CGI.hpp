@@ -52,13 +52,16 @@ class CGI
 
 		void	LaunchCGI(ConfigLocation const &config, ConfigServer &configServer);
 
-		pid_t	GetPidCgi();
-		int		GetPipeFd();
+		pid_t		GetPidCgi();
+		int			GetPipeFd();
+		int			GetPipeInFd();
+		std::string	GetCgiBody();
 
 	private:
 		pid_t	_pid;
 		char	**_envp;
 		int		_pipeFd;
+		int		_pipeInFd;
 		std::string	_inter;
 		std::time_t	_cgiStart;
 		std::string	_scriptPath;

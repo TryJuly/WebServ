@@ -6,7 +6,7 @@
 /*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 13:10:16 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/22 09:05:30 by seully           ###   ########.fr       */
+/*   Updated: 2026/06/26 06:39:05 by seully           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,7 @@ class Client
 		/*	Getter	*/
 		int	GetFd( void );
 		int	GetPipeFd( void );
+		int	GetPipeInFd( void );
 		int	GetIdClient( void );
 		int	GetIndexFdsStruct( void );
 		int	GetFdConfigServer( void );
@@ -50,17 +51,22 @@ class Client
 		std::time_t	GetTimeCgi(void );
 		std::string	GetCookie( void );
 		std::string	GetRequest( void );
+		std::string	GetCgiBody( void );
 		std::string	GetCgiResponse( void );
+		std::string	GetWriteBuffer( void );
 
 		/*	Setter	*/
 		void	SetFd(int fd);
 		void	SetPipeFd(int fd);
+		void	SetPipeInFd(int fd);
 		void	SetIdClient(int id);
 		void	SetPidCgi(pid_t pid);
 		void	SetIsCgi(bool value);
 		void	SetFdConfigServer(int fd);
 		void	SetTime(std::time_t value);
 		void	SetTimeCgi(std::time_t time);
+		void	SetCgiBody(std::string const &body);
+		void	SetWriteBuffer(std::string const &data);
 		void	SetIndexConfigServer(int index);
 		void	SetCookie(std::string const &value);
 
@@ -68,14 +74,17 @@ class Client
 		void	CloseFd( void );
 		void	ResetRequest( void );
 		void	CleanCgiResponse( void );
+		void	ClearWriteBuffer( void );
 		bool	ClientRequestIsReady( void );
 		void	AppendCgiResponse(char *buff, int bytes);
-		void	FillRequestClient(std::string const &str);
+		void	AppendWriteBuffer(std::string const &data);
+		void	FillRequestClient(const char *buff, size_t bytes);
 
 
 	private:
 		int	_fd;
 		int	_pipeFd;
+		int	_pipeInFd;
 		int	_idClient;
 		int	_fdConfigServer;
 		int	_indexConfigServer;
@@ -87,7 +96,9 @@ class Client
 		std::string _cookie;
 		std::string	_request;
 		std::time_t	_startCgi;
+		std::string	_cgiBody;
 		std::string	_cgiResponse;
+		std::string	_writeBuffer;
 
 };
 
