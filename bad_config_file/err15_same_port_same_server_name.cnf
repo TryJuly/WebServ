@@ -2,7 +2,7 @@
 # Conflit d'identite — le serveur ne peut pas distinguer les deux.
 
 server {
-    listen 8080;
+    listen 127.0.0.1:8080;
     server_name localhost;
     root ./var/www/html;
     index index.html;
@@ -17,7 +17,7 @@ server {
 }
 
 server {
-    listen 8080;
+    listen 127.0.0.1:8080;
     server_name localhost;
     root ./var/www;
     index index.html;

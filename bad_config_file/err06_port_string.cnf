@@ -2,7 +2,7 @@
 # "localhost" n'est pas un numero de port valide.
 
 server {
-    listen localhost;
+    listen 127.0.0.1:localhost;
     server_name localhost;
     root ./var/www/html;
     index index.html;

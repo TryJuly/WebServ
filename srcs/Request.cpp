@@ -92,14 +92,6 @@ Request::Request(std::string buff) {
             return ;
         }
     }
-	// size_t	pos = _path.find_first_of(".");
-	// if (pos != std::string::npos) {
-	// 	std::string extension = _path.substr(pos,_path.size());
-	// 	if (extension == ".py") {
-	// 		_isCGI = true;
-	// 		return ;
-	// 	}
-	// }
 
     //body
     size_t body_pos = req.find("\r\n\r\n");

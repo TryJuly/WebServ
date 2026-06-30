@@ -6,13 +6,11 @@
 /*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 17:15:09 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/26 16:37:40 by seully           ###   ########.fr       */
+/*   Updated: 2026/06/29 12:40:43 by seully           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-# include <signal.h>
 # include <iostream>
-# include <signal.h>
 # include <stdexcept>
 # include "../header/Server.hpp"
 

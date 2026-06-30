@@ -4,7 +4,7 @@
 # Chaque directive mal orthographiee doit etre rejetee comme inconnue.
 
 server {
-    listten 8080;
+    listten 127.0.0.1:8080;
     sevrer_name localhost;
     roto ./var/www/html;
     inedx index.html;

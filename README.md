@@ -20,3 +20,9 @@ https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status
 
 - Get static file :
     curl http://localhost:8080/index.html
+
+curl --resolve test.local:8080:127.0.0.1 http://test.local:8080/ -v
+
+curl -X POST -F "file=@Makefile" http://127.0.0.1:8080/uploads -v
+
+siege -c 10 -r 20 "http://127.0.0.1:8080/uploads POST < 404.html" == 415 normal

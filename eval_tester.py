@@ -971,7 +971,7 @@ def test_siege():
         for th in threads: th.join()
         elapsed = time.perf_counter() - t_start
 
-        ok_set   = {200, 201, 204, 301, 302, 405, 413}
+        ok_set   = {200, 201, 204, 301, 302, 405, 413, 415}
         hits     = [r for r in results if r and r[2] is None and r[0] in ok_set]
         net_errs = [r for r in results if r and r[2] is not None]
         srv_errs = [r for r in results if r and r[2] is None and r[0] >= 500]

@@ -6,7 +6,7 @@
 /*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 14:38:06 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/27 11:19:48 by seully           ###   ########.fr       */
+/*   Updated: 2026/06/29 17:08:31 by seully           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -201,7 +201,10 @@ void	Server::SetUpServer()
 			throw (std::runtime_error("Error: socket() failed: " + std::string(strerror(errno))));
 		int opt = 1;
 		setsockopt(config.GetSocket(), SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-		fcntl(config.GetSocket(), F_SETFL, O_NONBLOCK | FD_CLOEXEC);
+		if (fcntl(config.GetSocket(), F_SETFL, O_NONBLOCK | FD_CLOEXEC) == -1) {
+			close(config.GetSocket());
+			throw (std::runtime_error("Error: fcntl() failed: " + std::string(strerror(errno))));
+		}
 		struct sockaddr_in sockAddr = ResolveHostToAddr(config.GetHost(), config.GetPort());
 		config.SetSockAddr(sockAddr);
 
@@ -477,6 +480,7 @@ void	Server::CatchClientRequest(int i, int &NbClient)
 		_client[indexClient].ResetRequest();
 		_client[indexClient].SetTime(std::time(NULL));
 	}
+	return ;
 }
 
 void	Server::CheckTimeoutClient( void )
@@ -493,7 +497,7 @@ void	Server::CheckTimeoutClient( void )
 			int fdClose = _client[k].GetFd();
 			if (fdClose == -1)
 				continue ;
-			_client[k].SetFd(-1);
+			// _client[k].SetFd(-1);
 			for (size_t j = 0; j < _fds.size(); j++) {
 				if (_fds[j].fd == fdClose) {
 					_fds.erase(_fds.begin() + j);
@@ -559,7 +563,7 @@ void	Server::ParseConfig(std::vector<std::string> &fileArray)
 	unsigned int i = (fileArray.size() - 1);
 	for (int j = 0; fileArray[i][j] != '}'; i--) {
 		if (fileArray[i][0] != '}' && fileArray[i][0] != '#')
-			throw (std::invalid_argument("Error: Invalid syntax in config file."));
+			throw (std::invalid_argument("Error: Invalid syntax in config file -> " + fileArray[i]));
 	}
 
 	size_t	start = 0;
@@ -683,15 +687,28 @@ static int IsValideBloc(std::vector<std::string> &serverChunk)
 
 static void	CheckConfigRequired(std::set<std::string> configRequired)
 {
-	if (configRequired.count("listen") != 1)
-		throw (std::invalid_argument("Error: Missing configuration minimum required."));
-	if (configRequired.count("server_name") != 1)
-		throw (std::invalid_argument("Error: Missing configuration minimum required."));
-	if (configRequired.count("root") != 1)
-		throw (std::invalid_argument("Error: Missing configuration minimum required."));
-	if (configRequired.count("index") != 1)
-		throw (std::invalid_argument("Error: Missing configuration minimum required."));
-	if (configRequired.count("client_max_body_size") != 1)
+	int valid = 0;
+	if (configRequired.count("listen") != 1) {
+		valid++;
+		std::cerr << RED << "Error: Missing configuration minimum required ‘listen'." << RESET << std::endl;
+	}
+	if (configRequired.count("server_name") != 1) {
+		valid++;
+		std::cerr << RED << "Error: Missing configuration minimum required ‘server_name'." << RESET << std::endl;
+	}
+	if (configRequired.count("root") != 1) {
+		valid++;
+		std::cerr << RED << "Error: Missing configuration minimum required ‘root'." << RESET << std::endl;
+	}
+	if (configRequired.count("index") != 1) {
+		valid++;
+		std::cerr << RED << "Error: Missing configuration minimum required ‘index'." << RESET << std::endl;
+	}
+	if (configRequired.count("client_max_body_size") != 1) {
+		valid++;
+		std::cerr << RED << "Error: Missing configuration minimum required ‘client_max_body_size'." << RESET << std::endl;
+	}
+	if (valid != 0)
 		throw (std::invalid_argument("Error: Missing configuration minimum required."));
 	return ;
 }
@@ -880,7 +897,7 @@ static void CheckServerName(std::vector<ConfigServer>& configs)
 				SameName = true;
 
 			if (SamePort && SameHost && SameName)
-				throw std::runtime_error( "Conflicting server_name on same host:port: " + configs[i].GetServerName());
+				throw std::runtime_error( "Error: Conflicting server_name on same host:port: " + configs[i].GetServerName());
 		}
 	}
 	return ;
@@ -953,23 +970,23 @@ void	Server::WriteClientBuffer(int i, int &NbClient)
 
 static struct sockaddr_in ResolveHostToAddr(const std::string& host, int port)
 {
-    struct addrinfo hints;
-    struct addrinfo* res;
+	struct addrinfo hints;
+	struct addrinfo* res;
 
-    std::memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
+	std::memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
 
-    std::ostringstream portStream;
-    portStream << port;
+	std::ostringstream portStream;
+	portStream << port;
 
-    int status = getaddrinfo(host.c_str(), portStream.str().c_str(), &hints, &res);
-    if (status != 0)
-        throw std::runtime_error("getaddrinfo() failed: " + std::string(gai_strerror(status)));
+	int status = getaddrinfo(host.c_str(), portStream.str().c_str(), &hints, &res);
+	if (status != 0)
+		throw std::runtime_error("getaddrinfo() failed: " + std::string(gai_strerror(status)));
 
-    struct sockaddr_in addr = *reinterpret_cast<struct sockaddr_in*>(res->ai_addr);
+	struct sockaddr_in addr = *reinterpret_cast<struct sockaddr_in*>(res->ai_addr);
 
-    freeaddrinfo(res);
+	freeaddrinfo(res);
 
-    return addr;
+	return addr;
 }
