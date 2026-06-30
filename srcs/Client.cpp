@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
+/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 13:12:35 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/26 06:59:13 by seully           ###   ########.fr       */
+/*   Updated: 2026/06/30 11:52:28 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -211,7 +211,6 @@ bool	Client::ClientRequestIsReady( void )
 		else
 			bodyStart += 4;
 		std::string	body = _request.substr(bodyStart);
-		// std::cout << RED << "BODY: " << body << " " << bodyLength << RESET << std::endl;
 		if (static_cast<long>(body.size()) >= bodyLength)
 			return (true);
 	}
