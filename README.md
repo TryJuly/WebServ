@@ -25,6 +25,7 @@ https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status
     curl -X PUT http://localhost:8080/uploads ; should send error 405
     curl -X BLABLA http://localhost:8080 ; should send error 400
 
+- Virtual Host
 curl --resolve test.local:8080:127.0.0.1 http://test.local:8080/ -v
 
 curl -X POST -F "file=@Makefile" http://127.0.0.1:8080/uploads -v

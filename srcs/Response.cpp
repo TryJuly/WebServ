@@ -40,10 +40,8 @@ Response::Response( Request& req, ConfigServer& config) {
         return;
     }
     //OTHERS
-    else {
-        sendError(405, config);
-        // Bad request 400 ou Method not allowed 405 ?
-    }
+    else
+        throw std::runtime_error("405 ");
 }
 
 void Response::sendRedir(std::string path, ConfigServer& config, ConfigLocation& loc) {
@@ -64,67 +62,37 @@ void Response::getResponse(Request& req, ConfigServer& config) {
 
     int index_location = loc_index(path, config);
 
-    if (index_location < 0) {
-        sendError(404, config);
-        return;
-    }
+    if (index_location < 0)
+        throw std::runtime_error("404 ");
+
     else if (config.GetConfigLocation(index_location).GetRedir() != "") {
         sendRedir(path, config, config.GetConfigLocation(index_location));
         return ;
     }
-    else if (config.GetConfigLocation(index_location).GetBoolGet() != 1) {
-        sendError(405, config);
-        return ;
-    }
+    else if (config.GetConfigLocation(index_location).GetBoolGet() != 1)
+        throw std::runtime_error("405 ");
 
-    if (path == "/") {
-        sendIndex(config);
-    }
-    else {
-        ConfigLocation loc = config.GetConfigLocation(index_location);
-        std::string root = loc.GetRoot();
-        std::string f_path = root + path;
-        struct stat sb;
-        if (stat(f_path.c_str(), &sb) != 0) {
-            sendError(404, config);
-            return;
-        }
-        if (S_ISDIR(sb.st_mode)) {
-            if (loc.GetAutoIndex())
-                autoIndex(config, loc, f_path);
-            else if (loc.Getindex() != "")
-                sendLocIndex(config, loc);
-            else
-                sendError(404, config);
-            return;
-        }
-        _body = extract_file(f_path.c_str());
-        if (_body.empty()) {
-            sendError(500, config);
+    ConfigLocation loc = config.GetConfigLocation(index_location);
+    std::string root = loc.GetRoot();
+    std::string f_path = root + path;
+    struct stat sb;
+    if (stat(f_path.c_str(), &sb) != 0)
+        throw std::runtime_error("404 ");
+    if (S_ISDIR(sb.st_mode)) {
+        if (loc.GetAutoIndex()) {
+            autoIndex(config, loc, f_path);
             return ;
         }
-        _status = "HTTP/1.1 200 OK\r\n";
-        std::pair<std::string, std::string> type("Content-Type:", MimeType(f_path));
-        std::pair<std::string, std::string> length("Content-Length:", return_file_length(sb.st_size));
-        _headers.insert(type);
-        _headers.insert(length);
+        else if (loc.Getindex() != "") {
+            sendLocIndex(loc);
+            return ;
+        }
+        else
+            throw std::runtime_error("404 ");
     }
-}
-
-void Response::sendLocIndex(ConfigServer& config, ConfigLocation& loc) {
-    std::string f_path = loc.GetRoot() + loc.GetPath() + "/" + loc.Getindex();
-    std::cout << f_path << std::endl;
-
-    struct stat sb;
-    if (stat(f_path.c_str(), &sb) != 0) {
-        sendError(404, config);
-        return ;
-    }
-    _body = extract_file(f_path);
-    if (_body.empty()) {
-        sendError(500, config);
-        return ;
-    }
+    _body = extract_file(f_path.c_str());
+    if (_body.empty())
+        throw std::runtime_error("500 ");
     _status = "HTTP/1.1 200 OK\r\n";
     std::pair<std::string, std::string> type("Content-Type:", MimeType(f_path));
     std::pair<std::string, std::string> length("Content-Length:", return_file_length(sb.st_size));
@@ -132,7 +100,27 @@ void Response::sendLocIndex(ConfigServer& config, ConfigLocation& loc) {
     _headers.insert(length);
 }
 
-void Response::multipart(std::map<std::string, std::string>::iterator c_type, Request& req, ConfigServer& config, std::string upload_path) {
+void Response::sendLocIndex(ConfigLocation& loc) {
+    std::string f_path;
+    if (loc.GetPath()[-1] != '/')
+        f_path = loc.GetRoot() + loc.GetPath() + "/" + loc.Getindex();
+    else
+        f_path = loc.GetRoot() + loc.GetPath() + loc.Getindex();
+    struct stat sb;
+    if (stat(f_path.c_str(), &sb) != 0)
+        throw std::runtime_error("404 ");
+    _body = extract_file(f_path);
+    if (_body.empty())
+        throw std::runtime_error("500 ");
+
+    _status = "HTTP/1.1 200 OK\r\n";
+    std::pair<std::string, std::string> type("Content-Type:", MimeType(f_path));
+    std::pair<std::string, std::string> length("Content-Length:", return_file_length(sb.st_size));
+    _headers.insert(type);
+    _headers.insert(length);
+}
+
+void Response::multipart(std::map<std::string, std::string>::iterator c_type, Request& req, std::string upload_path) {
     std::string delimiter = "--" + c_type->second.substr(c_type->second.find("boundary=") + 9);
     std::string end_delim = delimiter + "--";
 
@@ -143,7 +131,6 @@ void Response::multipart(std::map<std::string, std::string>::iterator c_type, Re
     size_t pos = 0;
     while (req_body.find(delimiter, pos) != std::string::npos) {
         std::string part = req_body.substr(pos, req_body.find(delimiter, pos + 1) - pos);
-        std::cout << part << std::endl;
         parts.push_back(part);
         if (req_body.find(delimiter, pos + 1) == req_body.find(end_delim))
             break ;
@@ -174,30 +161,24 @@ void Response::multipart(std::map<std::string, std::string>::iterator c_type, Re
             continue ;
 
         std::string f_path = upload_path + "/" + file;
-        std::cout << f_path << std::endl;
 
         struct stat sb;
-        if (stat(f_path.c_str(), &sb) == 0) {
-            std::cout << "a file with this name already exists" << std::endl;
-            sendError(409, config);
-            return ;
-        }
+        if (stat(f_path.c_str(), &sb) == 0)
+            throw std::runtime_error("409 ");
 
         std::ofstream ofs(f_path.c_str(), std::ios::binary);
 
         size_t body_pos = parts[i].find("\r\n\r\n");
-        if (body_pos == std::string::npos) {
-            sendError(400, config);
-            return ;
-        }
+        if (body_pos == std::string::npos)
+            throw std::runtime_error("400 ");
+
         size_t data_start = body_pos + 4;
         size_t data_end = parts[i].size();
         if (data_end >= data_start + 2 && parts[i][data_end - 2] == '\r' && parts[i][data_end - 1] == '\n')
             data_end -= 2;
-        if (data_end < data_start) {
-            sendError(400, config);
-            return ;
-        }
+        if (data_end < data_start)
+            throw std::runtime_error("400 ");
+
         std::string file_body = parts[i].substr(data_start, data_end - data_start);
         ofs << file_body;
 
@@ -226,17 +207,14 @@ std::string generateFilename() {
     return (ss.str());
 }
 
-void Response::octetStream(Request& req, ConfigServer& config, std::string upload_path) {
+void Response::octetStream(Request& req, std::string upload_path) {
 
     std::string file = generateFilename();
     std::string f_path = upload_path + "/" + file;
     
     struct stat sb;
-    if (stat(f_path.c_str(), &sb) == 0) {
-        std::cout << "a file with this name already exists" << std::endl;
-        sendError(409, config);
-        return ;
-    }
+    if (stat(f_path.c_str(), &sb) == 0)
+        throw std::runtime_error("409 ");
 
     std::ofstream ofs(f_path.c_str(), std::ios::binary);
     ofs << req.getBody();
@@ -254,14 +232,11 @@ void Response::postResponse(Request& req, ConfigServer& config) {
 
     int index_location = loc_index(path, config);
 
-    if (index_location < 0) {
-        sendError(404, config);
-        return;
-    }
-    else if (config.GetConfigLocation(index_location).GetBoolPost() != 1) {
-        sendError(405, config);
-        return ;
-    }
+    if (index_location < 0)
+        throw std::runtime_error("404 ");
+
+    else if (config.GetConfigLocation(index_location).GetBoolPost() != 1)
+        throw std::runtime_error("405 ");
 
     ConfigLocation loc = config.GetConfigLocation(index_location);
     std::string upload_path = loc.GetUpload();
@@ -272,10 +247,10 @@ void Response::postResponse(Request& req, ConfigServer& config) {
         throw std::runtime_error("415 ");
 
     if (c_type->second.find("multipart/form-data") != std::string::npos) {
-        multipart(c_type, req, config, upload_path);
+        multipart(c_type, req, upload_path);
     }
-    else if (c_type->second == "application/octet-stream") {
-        octetStream(req, config, upload_path);
+    else if (c_type->second == "application/octet-stream" || c_type->second == "plain/text") {
+        octetStream(req, upload_path);
     }
     else
         throw std::runtime_error("415 ");
@@ -286,22 +261,18 @@ void Response::deleteResponse(Request& req, ConfigServer& config) {
     
     int index_location = loc_index(path, config);
 
-    if (index_location < 0) {
-        sendError(404, config);
-        return;
-    }
-    else if (config.GetConfigLocation(index_location).GetBoolDelete() != 1) {
-        sendError(405, config);
-        return ;
-    }
+    if (index_location < 0)
+        throw std::runtime_error("404 ");
+
+    else if (config.GetConfigLocation(index_location).GetBoolDelete() != 1)
+        throw std::runtime_error("405 ");
     
     ConfigLocation loc = config.GetConfigLocation(index_location);
     std::string root = loc.GetRoot();
     std::string f_path = root + path;
-    if (remove(f_path.c_str())) {
-        sendError(404, config);
-        return ;
-    }
+    if (remove(f_path.c_str()))
+        throw std::runtime_error("404 ");
+
     _status = "HTTP/1.1 204 No Content\r\n";
 }
 
@@ -368,26 +339,25 @@ std::string SetAutoIndexPage(std::string d_path, ConfigLocation& loc, ConfigServ
     return (body);
 }
 
-void Response::sendIndex(ConfigServer& config) {
-    std::string f_path = config.GetRoot() + "/" + config.GetIndex();
-    std::cout << f_path << std::endl;
+// void Response::sendIndex(ConfigServer& config) {
+//     std::string f_path = config.GetRoot() + "/" + config.GetIndex();
 
-    struct stat sb;
-    if (stat(f_path.c_str(), &sb) != 0) {
-        sendError(404, config);
-        return ;
-    }
-    _body = extract_file(f_path);
-    if (_body.empty()) {
-        sendError(500, config);
-        return ;
-    }
-    _status = "HTTP/1.1 200 OK\r\n";
-    std::pair<std::string, std::string> type("Content-Type:", MimeType(f_path));
-    std::pair<std::string, std::string> length("Content-Length:", return_file_length(sb.st_size));
-    _headers.insert(type);
-    _headers.insert(length);
-}
+//     struct stat sb;
+//     if (stat(f_path.c_str(), &sb) != 0) {
+//         sendError(404, config);
+//         return ;
+//     }
+//     _body = extract_file(f_path);
+//     if (_body.empty()) {
+//         sendError(500, config);
+//         return ;
+//     }
+//     _status = "HTTP/1.1 200 OK\r\n";
+//     std::pair<std::string, std::string> type("Content-Type:", MimeType(f_path));
+//     std::pair<std::string, std::string> length("Content-Length:", return_file_length(sb.st_size));
+//     _headers.insert(type);
+//     _headers.insert(length);
+// }
 
 std::string Response::getStatus(void) const {
     return (_status);
@@ -413,59 +383,59 @@ std::string Response::printResponse(void) {
     return (response);
 }
 
-void Response::sendError(int status, ConfigServer& config) {
-    std::string err_file;
-    switch (status) {
-        case 400:
-            err_file = config.GetErrorPages(status);
-            _status = "HTTP/1.1 400 Bad Request\r\n";
-            break ;
-        case 403:
-            err_file = config.GetErrorPages(status);
-            _status = "HTTP/1.1 403 Forbidden\r\n";
-            break ;
-        case 404:
-            err_file = config.GetErrorPages(status);
-            _status = "HTTP/1.1 404 Not Found\r\n";
-            break ;
-        case 405:
-            err_file = config.GetErrorPages(status);
-            _status = "HTTP/1.1 405 Method Not Allowed\r\n";
-            break;
-        case 409:
-            err_file = config.GetErrorPages(status);
-            _status = "HTTP/1.1 409 Conflict\r\n";
-            break;
-        case 413:
-            err_file = config.GetErrorPages(status);
-            _status = "HTTP/1.1 413 Content Too Large\r\n";
-            break ;
-        case 415:
-            err_file = config.GetErrorPages(status);
-            _status = "HTTP/1.1 415 Unsupported Media Type\r\n";
-            break ;
-        case 500:
-            err_file = config.GetErrorPages(status);
-            _status = "HTTP/1.1 500 Internal Server Error\r\n";
-            break ;
-        default:
-            _status = "HTTP/1.1 500 Internal Server Error\r\n";
-            break;
-    }
-    std::pair<std::string, std::string> type("Content-Type:", "text/html");
-    _headers.insert(type);
-    if (!err_file.empty()) {
-        _body = extract_file(err_file);
-        if (!_body.empty()) {
-            std::pair<std::string, std::string> length("Content-Length:", return_file_length(_body.size()));
-            _headers.insert(length);
-            return ;
-        }
-    }
-    _body = "";
-    std::pair<std::string, std::string> length("Content-Length:", "0");
-    _headers.insert(length);
-}
+// void Response::sendError(int status, ConfigServer& config) {
+//     std::string err_file;
+//     switch (status) {
+//         case 400:
+//             err_file = config.GetErrorPages(status);
+//             _status = "HTTP/1.1 400 Bad Request\r\n";
+//             break ;
+//         case 403:
+//             err_file = config.GetErrorPages(status);
+//             _status = "HTTP/1.1 403 Forbidden\r\n";
+//             break ;
+//         case 404:
+//             err_file = config.GetErrorPages(status);
+//             _status = "HTTP/1.1 404 Not Found\r\n";
+//             break ;
+//         case 405:
+//             err_file = config.GetErrorPages(status);
+//             _status = "HTTP/1.1 405 Method Not Allowed\r\n";
+//             break;
+//         case 409:
+//             err_file = config.GetErrorPages(status);
+//             _status = "HTTP/1.1 409 Conflict\r\n";
+//             break;
+//         case 413:
+//             err_file = config.GetErrorPages(status);
+//             _status = "HTTP/1.1 413 Content Too Large\r\n";
+//             break ;
+//         case 415:
+//             err_file = config.GetErrorPages(status);
+//             _status = "HTTP/1.1 415 Unsupported Media Type\r\n";
+//             break ;
+//         case 500:
+//             err_file = config.GetErrorPages(status);
+//             _status = "HTTP/1.1 500 Internal Server Error\r\n";
+//             break ;
+//         default:
+//             _status = "HTTP/1.1 500 Internal Server Error\r\n";
+//             break;
+//     }
+//     std::pair<std::string, std::string> type("Content-Type:", "text/html");
+//     _headers.insert(type);
+//     if (!err_file.empty()) {
+//         _body = extract_file(err_file);
+//         if (!_body.empty()) {
+//             std::pair<std::string, std::string> length("Content-Length:", return_file_length(_body.size()));
+//             _headers.insert(length);
+//             return ;
+//         }
+//     }
+//     _body = "";
+//     std::pair<std::string, std::string> length("Content-Length:", "0");
+//     _headers.insert(length);
+// }
 
 std::string extract_file(std::string filename) {
     std::ifstream ifs(filename.c_str(), std::ios::binary);

@@ -4,7 +4,7 @@ server {
     listen 127.0.0.1:8080;
     server_name localhost;
     root ./var/www/html;
-    index index.html;
+    index haha;
     client_max_body_size 1048576;
 
     error_page 404 ./var/www/errors/404.html;
@@ -13,6 +13,7 @@ server {
     error_page 409 ./var/www/errors/409.html;
 
     location / {
+        index index.html;
         methods GET;
         autoindex off;
     }
@@ -20,7 +21,7 @@ server {
     location /uploads {
         methods GET POST;
         autoindex off;
-        root ./var/www;
+        root ./var/www/;
         upload_path ./var/www/uploads;
     }
 

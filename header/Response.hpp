@@ -26,11 +26,11 @@ class Response {
         void    getResponse(Request& req, ConfigServer& config);
         void    postResponse(Request& req, ConfigServer& config);
         void    deleteResponse(Request& req, ConfigServer& config);
-        void    sendIndex(ConfigServer& config);
+        //void    sendIndex(ConfigServer& config);
         void    sendRedir(std::string path, ConfigServer& config, ConfigLocation& loc);
-        void    sendLocIndex(ConfigServer& config, ConfigLocation& loc);
-        void    multipart(std::map<std::string, std::string>::iterator c_type, Request& req, ConfigServer& config, std::string upload_path);
-        void    octetStream(Request& req, ConfigServer& config, std::string upload_path);
+        void    sendLocIndex(ConfigLocation& loc);
+        void    multipart(std::map<std::string, std::string>::iterator c_type, Request& req, std::string upload_path);
+        void    octetStream(Request& req, std::string upload_path);
         void    autoIndex(ConfigServer& config, ConfigLocation& loc, std::string f_path);
 
 
@@ -46,7 +46,7 @@ class Response {
         void setStatus(std::string status);
         std::string getBody(void) const;
         std::string printResponse(void);
-        void sendError(int status, ConfigServer& config);
+        //void sendError(int status, ConfigServer& config);
 };
 
 std::string extract_file(std::string filename);
