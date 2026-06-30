@@ -6,13 +6,10 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 13:12:35 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/30 11:52:28 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/30 12:08:59 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-# include <cerrno>
-# include <cstddef>
-# include <stdexcept>
 # include "../header/Client.hpp"
 
 /*	Default	*/
@@ -200,7 +197,6 @@ bool	Client::ClientRequestIsReady( void )
 		if (errno == ERANGE || bodyLength < 0)
 			throw (std::runtime_error("400 Error: Client Content-Length: "));
 
-			// Body part
 		size_t	bodyStart = _request.find("\r\n\r\n");
 		if (bodyStart == std::string::npos) {
 			bodyStart = _request.find("\n\n");

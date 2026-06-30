@@ -54,7 +54,6 @@ Request::Request(std::string buff) {
         throw std::runtime_error("400 Error: Empty Request");
 
     std::string first_line = req.substr(0, req.find_first_of('\n'));
-    //std::cout << req << std::endl << std::endl;
     //method
     if (first_line.find("GET") != first_line.npos) {
         _method = first_line.substr(0, 3);
@@ -72,7 +71,6 @@ Request::Request(std::string buff) {
         _path = first_line.substr(first_line.find_first_of('/'), first_line.find_last_of(' ') - (first_line.find_first_of('/')));
     else
         throw std::runtime_error("400 Error: No Path");
-    //std::cout << _path << " <-- just here" << std::endl;
 
     //headers
     fillHeaders(req);

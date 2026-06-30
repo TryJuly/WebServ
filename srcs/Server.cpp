@@ -6,20 +6,9 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 14:38:06 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/30 11:47:27 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/30 15:03:44 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-
-#include <netinet/in.h>
-# include <string>
-# include <cstddef>
-# include <fstream>
-# include <iostream>
-# include <sstream>
-# include <stdexcept>
-# include <sys/poll.h>
-# include <vector>
-# include <netdb.h>
 
 # include "../header/Server.hpp"
 # include "../header/Request.hpp"
@@ -155,7 +144,6 @@ void Server::StartServer()
 		if (nb == -1)
 			throw (std::runtime_error("Error: Poll()." + std::string(strerror(errno))));
 		for (unsigned int i = 0; i < _fds.size(); i++) {
-			// std::cout << "VALUE:" << POLLPRI << " " << POLLRDHUP << " " << POLLHUP << std::endl;
 			if (_fds[i].revents & POLLIN || _fds[i].revents & POLLHUP) {
 				if (IsSocketServer(_fds[i].fd)) {
 					AcceptClient(_fds[i].fd, IdClient);
@@ -295,7 +283,7 @@ void	Server::SendCgiResponse(int i)
 			_client[indexClient].AppendWriteBuffer(response);
 			close(_fds[i].fd);
 			int status;
-			waitpid(_client[indexClient].GetPidCgi(), &status, WNOHANG);	// ADD
+			waitpid(_client[indexClient].GetPidCgi(), &status, WNOHANG);
 			if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
 				_fds.erase(_fds.begin() + i);
 				_client[indexClient].SetIsCgi(false);
@@ -340,7 +328,7 @@ void	Server::HandleCgiRequest(ConfigServer &config, Request const &req, int inde
 	if (end == std::string::npos)
 		indexLocation = config.FindLocationPath("/");
 	else {
-		std::string locationPath = path.substr(start, end - start);	//
+		std::string locationPath = path.substr(start, end - start);
 		indexLocation = config.FindLocationPath(locationPath);
 		if (indexLocation == -1)
 			throw (std::runtime_error("404 Error:"));
@@ -415,6 +403,7 @@ void	Server::CatchClientRequest(int i, int &NbClient)
 				return ;
 			std::cout << "###	Client Message:	###\n" << std::endl;
 			Request req(_client[indexClient].GetRequest());
+			std::cout << "\n###	End client message	###\n" << std::endl;
 
 			std::map<std::string, std::string> header = req.getHeaders();
 			std::map<std::string, std::string>::iterator it = header.find("Host");
@@ -453,7 +442,6 @@ void	Server::CatchClientRequest(int i, int &NbClient)
 						return ;
 				}
 			}
-			std::cout << "###	End client message	###\n" << std::endl;
 			if (req.IsCGI() && req.getMethod() == "DELETE")
 				throw (std::invalid_argument("405 Error Method not allowed"));
 			if (req.getBody().size() > static_cast<unsigned int>(activeConfig.GetMaxBodySize()))
@@ -503,7 +491,6 @@ void	Server::CheckTimeoutClient( void )
 			int fdClose = _client[k].GetFd();
 			if (fdClose == -1)
 				continue ;
-			// _client[k].SetFd(-1);
 			for (size_t j = 0; j < _fds.size(); j++) {
 				if (_fds[j].fd == fdClose) {
 					_fds.erase(_fds.begin() + j);
@@ -605,11 +592,15 @@ void	Server::ParseConfig(std::vector<std::string> &fileArray)
 void	Server::CheckConfigServer()
 {
 	struct stat	sstat;
+	std::set<int> portCheck;
 	for (size_t	i = 0; i < _configServer.size(); i++) {
 		ConfigServer &configServer = GetConfigServer(i);
 		int port = configServer.GetPort();
 		if (port < 0 || port > 65534)
 			throw (std::invalid_argument("Error: Invalid port."));
+		if (portCheck.count(port) > 0)
+			throw (std::invalid_argument("Error: Same port."));
+		portCheck.insert(port);
 
 		for (int j = 0; j < configServer.GetNumberLocation(); j++) {
 			ConfigLocation &location = configServer.GetConfigLocation(j);
@@ -684,7 +675,7 @@ static int IsValideBloc(std::vector<std::string> &serverChunk)
 
 		if (serverChunk[i][0] == '#')
 			continue ;
-		if (serverChunk[i][0] != '{' && serverChunk[i][0] != '}' && serverChunk[i].size() < 5)	// Need to check
+		if (serverChunk[i][0] != '{' && serverChunk[i][0] != '}' && serverChunk[i].size() < 5)
 			return (1);
 	}
 	CheckConfigRequired(configRequired);
@@ -706,10 +697,10 @@ static void	CheckConfigRequired(std::set<std::string> configRequired)
 		valid++;
 		std::cerr << RED << "Error: Missing configuration minimum required ‘root'." << RESET << std::endl;
 	}
-	if (configRequired.count("index") != 1) {
-		valid++;
-		std::cerr << RED << "Error: Missing configuration minimum required ‘index'." << RESET << std::endl;
-	}
+	// if (configRequired.count("index") != 1) {
+	// 	valid++;
+	// 	std::cerr << RED << "Error: Missing configuration minimum required ‘index'." << RESET << std::endl;
+	// }
 	if (configRequired.count("client_max_body_size") != 1) {
 		valid++;
 		std::cerr << RED << "Error: Missing configuration minimum required ‘client_max_body_size'." << RESET << std::endl;

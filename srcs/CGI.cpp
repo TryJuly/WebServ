@@ -3,16 +3,13 @@
 /*                                                        :::      ::::::::   */
 /*   CGI.cpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
+/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/02 15:35:11 by seully            #+#    #+#             */
-/*   Updated: 2026/06/29 17:06:57 by seully           ###   ########.fr       */
+/*   Updated: 2026/06/30 12:07:51 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <string>
-#include <cstddef>
-#include <stdexcept>
 #include "../header/CGI.hpp"
 
 static bool ValidMethode(std::string method);
@@ -153,7 +150,7 @@ void	CGI::ParseFirstLine(std::string const &request)
 		std::string result = UrlDecode(query);
 		_stock.insert(std::make_pair("Query", result));
 	}
-	// Find html version
+
 	posStart = first_line.find("HTTP/");
 	if (posStart == std::string::npos)
 		throw std::invalid_argument("400");

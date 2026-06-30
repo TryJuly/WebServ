@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 13:10:16 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/30 11:32:55 by strieste         ###   ########.fr       */
+/*   Updated: 2026/06/30 12:08:40 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,8 +16,11 @@
 # include <ctime>
 # include <string>
 # include <vector>
-# include <cstdlib>	// std::strtol
+# include <cerrno>
+# include <cstddef>
+# include <cstdlib>
 # include <unistd.h>
+# include <stdexcept>
 # include "ConfigLocation.hpp"
 
 # define RED     "\033[31m"      /* Red */

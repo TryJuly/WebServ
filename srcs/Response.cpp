@@ -460,7 +460,6 @@ int loc_index(std::string path, ConfigServer& config) {
         }
         else {
             std::string loc_path = path.substr(0, index);
-            std::cout << loc_path << std::endl;
             index_location = config.FindLocationPath(loc_path);
         }
     }

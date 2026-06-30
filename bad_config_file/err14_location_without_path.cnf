@@ -5,7 +5,6 @@ server {
     listen 127.0.0.1:8080;
     server_name localhost;
     root ./var/www/html;
-    index index.html;
     client_max_body_size 1048576;
 
     error_page 404 ./var/www/errors/404.html;
