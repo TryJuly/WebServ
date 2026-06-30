@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
+/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 14:38:06 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/29 17:08:31 by seully           ###   ########.fr       */
+/*   Updated: 2026/06/30 11:47:27 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -155,7 +155,8 @@ void Server::StartServer()
 		if (nb == -1)
 			throw (std::runtime_error("Error: Poll()." + std::string(strerror(errno))));
 		for (unsigned int i = 0; i < _fds.size(); i++) {
-			if (_fds[i].revents & POLLIN) {
+			// std::cout << "VALUE:" << POLLPRI << " " << POLLRDHUP << " " << POLLHUP << std::endl;
+			if (_fds[i].revents & POLLIN || _fds[i].revents & POLLHUP) {
 				if (IsSocketServer(_fds[i].fd)) {
 					AcceptClient(_fds[i].fd, IdClient);
 					IdClient++;
@@ -233,7 +234,10 @@ void	Server::AcceptClient(int fd, int idClient)
 	int socketClient = accept(fd, reinterpret_cast<struct sockaddr *>(&clientAddr), &addrLen);
 	if (socketClient == -1)
 		return ;
-	fcntl(socketClient, F_SETFL, O_NONBLOCK | FD_CLOEXEC);
+	if (fcntl(socketClient, F_SETFL, O_NONBLOCK | FD_CLOEXEC) == -1) {
+		close(socketClient);
+		return ;
+	}
 
 	struct pollfd clientPoll;
 	clientPoll.fd = socketClient;
@@ -454,8 +458,10 @@ void	Server::CatchClientRequest(int i, int &NbClient)
 				throw (std::invalid_argument("405 Error Method not allowed"));
 			if (req.getBody().size() > static_cast<unsigned int>(activeConfig.GetMaxBodySize()))
 				throw std::runtime_error("413 Error: Payload too large");
-			if (req.IsCGI() == true)
+			if (req.IsCGI() == true) {
 				HandleCgiRequest(activeConfig, req, indexClient);
+				_client[indexClient].SetTimeCgi(std::time(NULL));
+			}
 			else {
 				Response rep(req, activeConfig);
 				if (rep.getBody().size() > static_cast<unsigned int>(activeConfig.GetMaxBodySize()))
