@@ -77,9 +77,9 @@ void Response::getResponse(Request& req, ConfigServer& config) {
         return ;
     }
 
-    if (path == "/") {
-        sendIndex(config);
-    }
+    // if (path == "/") {
+    //     sendIndex(config);
+    // }
     else {
         ConfigLocation loc = config.GetConfigLocation(index_location);
         std::string root = loc.GetRoot();
@@ -113,7 +113,6 @@ void Response::getResponse(Request& req, ConfigServer& config) {
 
 void Response::sendLocIndex(ConfigServer& config, ConfigLocation& loc) {
     std::string f_path = loc.GetRoot() + loc.GetPath() + "/" + loc.Getindex();
-    std::cout << f_path << std::endl;
 
     struct stat sb;
     if (stat(f_path.c_str(), &sb) != 0) {
@@ -143,7 +142,6 @@ void Response::multipart(std::map<std::string, std::string>::iterator c_type, Re
     size_t pos = 0;
     while (req_body.find(delimiter, pos) != std::string::npos) {
         std::string part = req_body.substr(pos, req_body.find(delimiter, pos + 1) - pos);
-        std::cout << part << std::endl;
         parts.push_back(part);
         if (req_body.find(delimiter, pos + 1) == req_body.find(end_delim))
             break ;
@@ -174,7 +172,6 @@ void Response::multipart(std::map<std::string, std::string>::iterator c_type, Re
             continue ;
 
         std::string f_path = upload_path + "/" + file;
-        std::cout << f_path << std::endl;
 
         struct stat sb;
         if (stat(f_path.c_str(), &sb) == 0) {
@@ -370,7 +367,6 @@ std::string SetAutoIndexPage(std::string d_path, ConfigLocation& loc, ConfigServ
 
 void Response::sendIndex(ConfigServer& config) {
     std::string f_path = config.GetRoot() + "/" + config.GetIndex();
-    std::cout << f_path << std::endl;
 
     struct stat sb;
     if (stat(f_path.c_str(), &sb) != 0) {
@@ -490,7 +486,6 @@ int loc_index(std::string path, ConfigServer& config) {
         }
         else {
             std::string loc_path = path.substr(0, index);
-            std::cout << loc_path << std::endl;
             index_location = config.FindLocationPath(loc_path);
         }
     }

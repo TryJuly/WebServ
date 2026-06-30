@@ -7,7 +7,6 @@ server {
     listten 127.0.0.1:8080;
     sevrer_name localhost;
     roto ./var/www/html;
-    inedx index.html;
     client_max_body_size 1048576;
 
     error_page 404 ./var/www/errors/404.html;
