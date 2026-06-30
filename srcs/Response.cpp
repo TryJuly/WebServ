@@ -227,7 +227,9 @@ std::string generateTimestamp() {
 }
 
 void Response::octetStream(Request& req, ConfigServer& config, std::string upload_path) {
-    std::string file = generateTimestamp() + "_" + std::to_string(upcount++);   // CHANGEEEEE
+    std::stringstream ss;
+    ss << upcount++;
+    std::string file = generateTimestamp() + "_" + ss.str();   // CHANGEEEEE
     std::string f_path = upload_path + "/" + file;
     
     struct stat sb;
