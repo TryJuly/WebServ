@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
+/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 14:34:40 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/27 11:15:56 by seully           ###   ########.fr       */
+/*   Updated: 2026/06/30 12:13:04 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,13 +18,19 @@
 # include <poll.h>
 # include <string>
 # include <vector>
+# include <sstream>
+# include <fstream>
 # include <fcntl.h>
 # include <errno.h>
-# include <cstdlib>	// std::atoi
-# include <cstring>	// strncmp
+# include <cstdlib>
+# include <cstddef>
+# include <cstring>
+# include <netdb.h>
 # include <unistd.h>
 # include <iostream>
+# include <stdexcept>
 # include <sys/stat.h>
+# include <sys/poll.h>
 # include <sys/socket.h>
 # include <netinet/in.h>
 
@@ -33,7 +39,6 @@
 # include "Request.hpp"
 # include "ConfigServer.hpp"
 
-// # define MAX_EVENTS 200
 # define RED     "\033[31m"      /* Red */
 # define GREEN   "\033[32m"      /* Green */
 # define YELLOW  "\033[33m"      /* Yellow */

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigServer.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
+/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/25 12:51:30 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/27 09:09:34 by seully           ###   ########.fr       */
+/*   Updated: 2026/06/30 12:10:21 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,8 +18,10 @@
 # include <string>
 # include <vector>
 # include <cstdlib>	// std::atoi
+# include <cstddef>
 # include <iostream>
 # include <exception>
+# include <stdexcept>
 # include <netinet/in.h>
 # include <sys/socket.h>
 # include "ConfigLocation.hpp"
@@ -95,6 +97,6 @@ class ConfigServer
 };
 
 void	ClearSpace(std::string &str);
-int	EndChunk(std::vector<std::string> &fileArray, unsigned int index);
+int		EndChunk(std::vector<std::string> &fileArray, unsigned int index);
 
 #endif

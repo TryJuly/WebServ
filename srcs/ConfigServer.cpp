@@ -3,21 +3,18 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigServer.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
+/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 08:36:43 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/27 11:13:10 by seully           ###   ########.fr       */
+/*   Updated: 2026/06/30 14:36:30 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../header/ConfigServer.hpp"
-#include <cstddef>
-#include <stdexcept>
 
 static char	GetIdentifier(std::string &str);
 static char	GetIdentifierLocation(std::string &token);
 static void	CheckConfigRequired(std::set<char> &checkDoube);
-// static void	ValidConfigMini(std::set<std::string> &checkConfigMin);
 static int	SkipLocation(std::vector<std::string> &serverBloc, int index);
 static ssize_t	StartLocation(std::vector<std::string> &serverChunk, size_t index);
 static void	ServerPart(std::vector<std::string> &serverBloc, ConfigServer &config);
@@ -301,7 +298,7 @@ void	ConfigServer::SetConfigServer(std::string &str, char iD)
 	if (end == std::string::npos)
 			throw (std::invalid_argument("Error: Missing `;' end of line: " + str));
 	else if (start == std::string::npos)
-			throw (std::invalid_argument("Error: Invalid syntax line: " + str));
+			throw (std::invalid_argument("Error: Invalid syntax Server line: " + str));
 
 	std::string value = str.substr(start, end - start);
 	ClearSpace(value);
@@ -360,7 +357,7 @@ static void	FillConfigLocation(ConfigLocation &config, std::vector<std::string> 
 			continue ;
 
 		if (endToken == std::string::npos)
-			throw (std::invalid_argument("Error: Invalid syntax line: " + locationChunk[i]));
+			throw (std::invalid_argument("Error: Invalid syntax location line: " + locationChunk[i]));
 		if (endValue == std::string::npos)
 			throw (std::invalid_argument("Error: Missing `;' end of line: " + locationChunk[i]));
 
@@ -439,12 +436,12 @@ static void	ServerPart(std::vector<std::string> &serverBloc, ConfigServer &confi
 				checkDouble.insert('R');
 				config.SetConfigServer(serverBloc[i], 'R');
 				break ;
-			case 'I':
-				if (checkDouble.count('I') > 0)
-					throw (std::invalid_argument("Error: 2 identical instructions: " + serverBloc[i]));
-				checkDouble.insert('I');
-				config.SetConfigServer(serverBloc[i], 'I');
-				break ;
+			// case 'I':
+			// 	if (checkDouble.count('I') > 0)
+			// 		throw (std::invalid_argument("Error: 2 identical instructions: " + serverBloc[i]));
+			// 	checkDouble.insert('I');
+			// 	config.SetConfigServer(serverBloc[i], 'I');
+			// 	break ;
 			case 'C':
 				if (checkDouble.count('C') > 0)
 					throw (std::invalid_argument("Error: 2 identical instructions: " + serverBloc[i]));
@@ -465,7 +462,7 @@ static void	ServerPart(std::vector<std::string> &serverBloc, ConfigServer &confi
 			case 's':
 				break ;
 			default:
-				throw (std::invalid_argument("Error: Invalid syntax line: " + serverBloc[i]));
+				throw (std::invalid_argument("Error: Invalid syntax server line: " + serverBloc[i]));
 				break ;
 			}
 	}
@@ -481,8 +478,8 @@ static void	CheckConfigRequired(std::set<char> &checkDoube)
 		throw (std::invalid_argument("Error: Missing `server_name' instructions."));
 	if (checkDoube.count('R') < 1)
 		throw (std::invalid_argument("Error: Missing `root' instructions."));
-	if (checkDoube.count('I') < 1)
-		throw (std::invalid_argument("Error: Missing `index' instructions."));
+	// if (checkDoube.count('I') < 1)
+	// 	throw (std::invalid_argument("Error: Missing `index' instructions."));
 	if (checkDoube.count('C') < 1)
 		throw (std::invalid_argument("Error: Missing `client_max_body_size' instructions."));
 	return ;
@@ -514,7 +511,7 @@ static char	GetIdentifier(std::string &str)
 {
 	size_t	index = str.find_first_of(" \t");
 	if (index == std::string::npos && str.compare("}"))
-		throw (std::invalid_argument("Error: Invalid syntax line: " + str));
+		throw (std::invalid_argument("Error: Invalid syntax server line: " + str));
 	std::string token = str.substr(0, index);
 
 	if (!token.compare("listen"))
@@ -523,8 +520,8 @@ static char	GetIdentifier(std::string &str)
 		return ('S');
 	if (!token.compare("root"))
 		return ('R');
-	if (!token.compare("index"))
-		return ('I');
+	// if (!token.compare("index"))
+	// 	return ('I');
 	if (!token.compare("client_max_body_size"))
 		return ('C');
 	if (!token.compare("error_page"))

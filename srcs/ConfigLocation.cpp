@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigLocation.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
+/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/26 09:35:48 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/26 11:17:51 by seully           ###   ########.fr       */
+/*   Updated: 2026/06/30 14:35:13 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -116,7 +116,7 @@ void	ConfigLocation::SetRedir(std::string const &str)
 {
 	size_t	endKey = str.find_first_of(" \t");
 	if (endKey == std::string::npos)
-			throw (std::invalid_argument("Error: Invalid syntax line: " + str));
+			throw (std::invalid_argument("Error: Invalid syntax location line: " + str));
 	_redir = str.substr(endKey + 1, str.size() - endKey);
 	return ;
 }
@@ -159,7 +159,7 @@ void	ConfigLocation::SetCGI(std::string const &value)
 {
 	size_t	endKey = value.find_first_of(" \t");
 	if (endKey == std::string::npos)
-			throw (std::invalid_argument("Error: Invalid syntax line: " + value));
+			throw (std::invalid_argument("Error: Invalid syntax Location line: " + value));
 
 	std::string key = value.substr(0, endKey);
 	std::string val = value.substr(endKey + 1, value.size() - endKey);
