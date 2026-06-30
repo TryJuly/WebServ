@@ -20,7 +20,7 @@ server {
     location /uploads {
         methods GET POST;
         autoindex off;
-        root ./var/www;
+        root ./var/www/;
         upload_path ./var/www/uploads;
     }
 
