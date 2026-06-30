@@ -3,7 +3,7 @@
 # Le parser doit detecter que ce n'est pas un entier valide.
 
 server {
-    listen 8o80;
+    listen 127.0.0.1:8o80;
     server_name localhost;
     root ./var/www/html;
     index index.html;

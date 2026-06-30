@@ -2,7 +2,7 @@
 # 99999 depasse la limite — le parser doit rejeter cette valeur.
 
 server {
-    listen 99999;
+    listen 127.0.0.1:99999;
     server_name localhost;
     root ./var/www/html;
     index index.html;

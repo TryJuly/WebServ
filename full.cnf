@@ -1,7 +1,7 @@
 # hellooo
 server {
 
-    listen localhost:8080;
+    listen 127.0.0.1:8080;
     server_name localhost;
     root ./var/www/html;
     index index.html;
@@ -59,6 +59,11 @@ server {
     client_max_body_size 512;
 
     error_page 404 ./var/www/errors/404.html;
+
+    location / {
+        methods GET;
+        autoindex off;
+    }
 
 	location /blabla {
         autoindex on;

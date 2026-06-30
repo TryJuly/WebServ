@@ -3,7 +3,7 @@
 # Le parser doit detecter et rejeter les blocs server niches.
 
 server {
-    listen 8080;
+    listen 127.0.0.1:8080;
     server_name localhost;
     root ./var/www/html;
     index index.html;

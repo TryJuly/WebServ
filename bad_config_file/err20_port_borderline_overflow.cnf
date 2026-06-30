@@ -3,7 +3,7 @@
 # Ce cas teste la borne stricte de la plage [0, 65535].
 
 server {
-    listen 65536;
+    listen 127.0.0.1:65536;
     server_name localhost;
     root ./var/www/html;
     index index.html;

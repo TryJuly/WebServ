@@ -3,7 +3,7 @@
 # Distinct de err06 qui utilise un mot pur comme "localhost".
 
 server {
-    listen 80abc;
+    listen 127.0.0.1:80abc;
     server_name localhost;
     root ./var/www/html;
     index index.html;

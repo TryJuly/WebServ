@@ -219,6 +219,7 @@ void Response::multipart(std::map<std::string, std::string>::iterator c_type, Re
     _headers.insert(location);
 }
 // mettre dans utils 
+static int upcount = 0;     // CHANGE
 std::string generateTimestamp() {
     std::ostringstream time;
     time << std::time(NULL);
@@ -226,7 +227,7 @@ std::string generateTimestamp() {
 }
 
 void Response::octetStream(Request& req, ConfigServer& config, std::string upload_path) {
-    std::string file = generateTimestamp();
+    std::string file = generateTimestamp() + "_" + std::to_string(upcount++);   // CHANGEEEEE
     std::string f_path = upload_path + "/" + file;
     
     struct stat sb;

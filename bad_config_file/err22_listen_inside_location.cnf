@@ -3,7 +3,7 @@
 # Le parser doit rejeter une directive de contexte superieur dans un sous-bloc.
 
 server {
-    listen 8080;
+    listen 127.0.0.1:8080;
     server_name localhost;
     root ./var/www/html;
     index index.html;

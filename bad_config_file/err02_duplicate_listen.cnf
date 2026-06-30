@@ -2,8 +2,8 @@
 # Un server ne peut avoir qu'un seul port d'ecoute.
 
 server {
-    listen 8080;
-    listen 9090;
+    listen 127.0.0.1:8080;
+    listen 127.0.0.1:9090;
     server_name localhost;
     root ./var/www/html;
     index index.html;
