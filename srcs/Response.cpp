@@ -218,18 +218,17 @@ void Response::multipart(std::map<std::string, std::string>::iterator c_type, Re
     _headers.insert(length);
     _headers.insert(location);
 }
-// mettre dans utils 
-static int upcount = 0;     // CHANGE
-std::string generateTimestamp() {
-    std::ostringstream time;
-    time << std::time(NULL);
-    return (time.str());
+
+std::string generateFilename() {
+    static int upcount = 0; 
+    std::stringstream ss;
+    ss << upcount++;
+    return (ss.str());
 }
 
 void Response::octetStream(Request& req, ConfigServer& config, std::string upload_path) {
-    std::stringstream ss;
-    ss << upcount++;
-    std::string file = generateTimestamp() + "_" + ss.str();   // CHANGEEEEE
+
+    std::string file = generateFilename();
     std::string f_path = upload_path + "/" + file;
     
     struct stat sb;

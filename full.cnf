@@ -65,6 +65,11 @@ server {
         autoindex off;
     }
 
+    location /new {
+        methods GET;
+        autoindex on;
+    }
+
 	location /blabla {
         autoindex on;
 		methods GET POST DELETE;
