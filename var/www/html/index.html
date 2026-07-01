@@ -26,5 +26,56 @@
 
     <h2>DELETE via curl</h2>
     <pre>curl -X DELETE http://localhost:8080/files/monFichier.txt</pre>
+
+    <hr>
+
+    <h2>curl examples — GET</h2>
+    <pre># 1. Get index page
+curl http://localhost:8080/
+
+# 2. Get a static HTML file
+curl http://localhost:8080/index.html
+
+# 3. List uploaded files (autoindex)
+curl http://localhost:8080/files/
+
+# 4. Execute a PHP CGI script
+curl http://localhost:8080/cgi-bin/hello.php
+
+# 5. Execute a Python CGI script
+curl http://localhost:8080/cgi-bin/hello.py</pre>
+
+    <h2>curl examples — POST</h2>
+    <pre># 1. Upload a file (multipart/form-data)
+curl -F "file=@test.txt" http://localhost:8080/uploads
+
+# 2. Upload a file (raw binary body)
+curl -X POST -H "Content-Type: application/octet-stream" \
+     --data-binary @test.txt http://localhost:8080/uploads
+
+# 3. Upload a Makefile
+curl -X POST -F "file=@Makefile" http://localhost:8080/uploads
+
+# 4. Send POST data to a PHP CGI
+curl -X POST -d "name=world" http://localhost:8080/cgi-bin/hello.php
+
+# 5. Send POST data to a Python CGI
+curl -X POST -d "name=world" http://localhost:8080/cgi-bin/hello.py</pre>
+
+    <h2>curl examples — DELETE</h2>
+    <pre># 1. Delete a specific uploaded file
+curl -X DELETE http://localhost:8080/files/test.txt
+
+# 2. Delete an HTML file
+curl -X DELETE http://localhost:8080/files/index.html
+
+# 3. Delete a Makefile previously uploaded
+curl -X DELETE http://localhost:8080/files/Makefile
+
+# 4. Delete — expect 404 if file does not exist
+curl -X DELETE http://localhost:8080/files/nonexistent.txt
+
+# 5. Delete — expect 405 on route that forbids DELETE
+curl -X DELETE http://localhost:8080/uploads</pre>
 </body>
 </html>
