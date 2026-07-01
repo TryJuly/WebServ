@@ -1,5 +1,5 @@
 # include "../header/Request.hpp"
-#include <cstddef>
+# include <cstddef>
 
 Request::Request() {
 	_isCGI = false;
@@ -54,7 +54,7 @@ Request::Request(std::string buff) {
         throw std::runtime_error("400 Error: Empty Request");
 
     std::string first_line = req.substr(0, req.find_first_of('\n'));
-    //method
+
     if (first_line.find("GET") != first_line.npos) {
         _method = first_line.substr(0, 3);
     }
@@ -66,13 +66,13 @@ Request::Request(std::string buff) {
     }
     else
         checkMethod(first_line);
-    //path
+
     if (first_line.find_first_of('/') != std::string::npos)
         _path = first_line.substr(first_line.find_first_of('/'), first_line.find_last_of(' ') - (first_line.find_first_of('/')));
     else
         throw std::runtime_error("400 Error: No Path");
 
-    //headers
+
     fillHeaders(req);
     if (_headers.find("Host") == _headers.end()) {
         throw (std::runtime_error("400 Error: No Host"));
@@ -80,7 +80,7 @@ Request::Request(std::string buff) {
     else if (_headers.find("Host")->second == "")
         throw (std::runtime_error("400 Error: No Host"));
 
-	//	CGI Check
+
     size_t  pos = _path.find_last_of('.');
     if (pos != std::string::npos) {
         size_t  queryPos = _path.find('?', pos);
@@ -91,7 +91,7 @@ Request::Request(std::string buff) {
         }
     }
 
-    //body
+
     size_t body_pos = req.find("\r\n\r\n");
     if (body_pos == std::string::npos) {
         body_pos = req.find("\n\n");

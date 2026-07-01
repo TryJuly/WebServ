@@ -23,23 +23,17 @@ Response& Response::operator=(const Response& other) {
 Response::~Response() {}
 
 Response::Response( Request& req, ConfigServer& config) {
-    //POST method
-    if (req.getMethod() == "POST") {
+
+    if (req.getMethod() == "POST")
         postResponse(req, config);
-        return;
-    }
-    //DELETE method
-    else if (req.getMethod() == "DELETE") {
+
+    else if (req.getMethod() == "DELETE")
         deleteResponse(req, config);
-        return;
-    }
-    //GET method
-    else if (req.getMethod() == "GET") {
+
+
+    else if (req.getMethod() == "GET")
         getResponse(req, config);
-        
-        return;
-    }
-    //OTHERS
+
     else
         throw std::runtime_error("405 ");
 }
@@ -249,7 +243,7 @@ void Response::postResponse(Request& req, ConfigServer& config) {
     if (c_type->second.find("multipart/form-data") != std::string::npos) {
         multipart(c_type, req, upload_path);
     }
-    else if (c_type->second == "application/octet-stream" || c_type->second == "plain/text") {
+    else if (c_type->second == "application/octet-stream" || c_type->second == "text/plain") {
         octetStream(req, upload_path);
     }
     else
@@ -339,26 +333,6 @@ std::string SetAutoIndexPage(std::string d_path, ConfigLocation& loc, ConfigServ
     return (body);
 }
 
-// void Response::sendIndex(ConfigServer& config) {
-//     std::string f_path = config.GetRoot() + "/" + config.GetIndex();
-
-//     struct stat sb;
-//     if (stat(f_path.c_str(), &sb) != 0) {
-//         sendError(404, config);
-//         return ;
-//     }
-//     _body = extract_file(f_path);
-//     if (_body.empty()) {
-//         sendError(500, config);
-//         return ;
-//     }
-//     _status = "HTTP/1.1 200 OK\r\n";
-//     std::pair<std::string, std::string> type("Content-Type:", MimeType(f_path));
-//     std::pair<std::string, std::string> length("Content-Length:", return_file_length(sb.st_size));
-//     _headers.insert(type);
-//     _headers.insert(length);
-// }
-
 std::string Response::getStatus(void) const {
     return (_status);
 }
@@ -382,60 +356,6 @@ std::string Response::printResponse(void) {
     response.append(_body);
     return (response);
 }
-
-// void Response::sendError(int status, ConfigServer& config) {
-//     std::string err_file;
-//     switch (status) {
-//         case 400:
-//             err_file = config.GetErrorPages(status);
-//             _status = "HTTP/1.1 400 Bad Request\r\n";
-//             break ;
-//         case 403:
-//             err_file = config.GetErrorPages(status);
-//             _status = "HTTP/1.1 403 Forbidden\r\n";
-//             break ;
-//         case 404:
-//             err_file = config.GetErrorPages(status);
-//             _status = "HTTP/1.1 404 Not Found\r\n";
-//             break ;
-//         case 405:
-//             err_file = config.GetErrorPages(status);
-//             _status = "HTTP/1.1 405 Method Not Allowed\r\n";
-//             break;
-//         case 409:
-//             err_file = config.GetErrorPages(status);
-//             _status = "HTTP/1.1 409 Conflict\r\n";
-//             break;
-//         case 413:
-//             err_file = config.GetErrorPages(status);
-//             _status = "HTTP/1.1 413 Content Too Large\r\n";
-//             break ;
-//         case 415:
-//             err_file = config.GetErrorPages(status);
-//             _status = "HTTP/1.1 415 Unsupported Media Type\r\n";
-//             break ;
-//         case 500:
-//             err_file = config.GetErrorPages(status);
-//             _status = "HTTP/1.1 500 Internal Server Error\r\n";
-//             break ;
-//         default:
-//             _status = "HTTP/1.1 500 Internal Server Error\r\n";
-//             break;
-//     }
-//     std::pair<std::string, std::string> type("Content-Type:", "text/html");
-//     _headers.insert(type);
-//     if (!err_file.empty()) {
-//         _body = extract_file(err_file);
-//         if (!_body.empty()) {
-//             std::pair<std::string, std::string> length("Content-Length:", return_file_length(_body.size()));
-//             _headers.insert(length);
-//             return ;
-//         }
-//     }
-//     _body = "";
-//     std::pair<std::string, std::string> length("Content-Length:", "0");
-//     _headers.insert(length);
-// }
 
 std::string extract_file(std::string filename) {
     std::ifstream ifs(filename.c_str(), std::ios::binary);
