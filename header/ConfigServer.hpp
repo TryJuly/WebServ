@@ -17,7 +17,7 @@
 # include <set>
 # include <string>
 # include <vector>
-# include <cstdlib>	// std::atoi
+# include <cstdlib>
 # include <cstddef>
 # include <iostream>
 # include <exception>

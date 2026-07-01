@@ -89,7 +89,6 @@ void	Client::SetIdClient(int id)
 void Client::SetFdConfigServer( int fd)
 { _fdConfigServer = fd; return ; }
 
-//		CHECK
 void	Client::SetTime(std::time_t value)
 { (void) value; _time = std::time(NULL); return ; }
 

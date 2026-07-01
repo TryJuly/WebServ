@@ -13,7 +13,7 @@
 #include <string>
 #include <cstdio>
 #include <ctime>
-#include <dirent.h>   // directory
+#include <dirent.h>
 #include <sys/types.h>
 
 class Response {
@@ -26,7 +26,6 @@ class Response {
         void    getResponse(Request& req, ConfigServer& config);
         void    postResponse(Request& req, ConfigServer& config);
         void    deleteResponse(Request& req, ConfigServer& config);
-        //void    sendIndex(ConfigServer& config);
         void    sendRedir(std::string path, ConfigServer& config, ConfigLocation& loc);
         void    sendLocIndex(ConfigLocation& loc);
         void    multipart(std::map<std::string, std::string>::iterator c_type, Request& req, std::string upload_path);
@@ -46,7 +45,6 @@ class Response {
         void setStatus(std::string status);
         std::string getBody(void) const;
         std::string printResponse(void);
-        //void sendError(int status, ConfigServer& config);
 };
 
 std::string extract_file(std::string filename);

@@ -697,10 +697,6 @@ static void	CheckConfigRequired(std::set<std::string> configRequired)
 		valid++;
 		std::cerr << RED << "Error: Missing configuration minimum required ‘root'." << RESET << std::endl;
 	}
-	// if (configRequired.count("index") != 1) {
-	// 	valid++;
-	// 	std::cerr << RED << "Error: Missing configuration minimum required ‘index'." << RESET << std::endl;
-	// }
 	if (configRequired.count("client_max_body_size") != 1) {
 		valid++;
 		std::cerr << RED << "Error: Missing configuration minimum required ‘client_max_body_size'." << RESET << std::endl;

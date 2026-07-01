@@ -18,12 +18,10 @@ void	PrintFullConfigServer(Server &server);
 
 int	main(int ac, char **av)
 {
-	// signal(SIGINT, signalHandler);
 	try {
 		if (ac > 2)
 			throw (std::invalid_argument("Error: Too many arguments."));
 		Server server(ac, av);
-		// PrintFullConfigServer(server);
 		server.StartServer();
 	}
 	catch(const std::exception& e) {

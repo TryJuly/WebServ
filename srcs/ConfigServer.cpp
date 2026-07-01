@@ -436,12 +436,6 @@ static void	ServerPart(std::vector<std::string> &serverBloc, ConfigServer &confi
 				checkDouble.insert('R');
 				config.SetConfigServer(serverBloc[i], 'R');
 				break ;
-			// case 'I':
-			// 	if (checkDouble.count('I') > 0)
-			// 		throw (std::invalid_argument("Error: 2 identical instructions: " + serverBloc[i]));
-			// 	checkDouble.insert('I');
-			// 	config.SetConfigServer(serverBloc[i], 'I');
-			// 	break ;
 			case 'C':
 				if (checkDouble.count('C') > 0)
 					throw (std::invalid_argument("Error: 2 identical instructions: " + serverBloc[i]));
@@ -478,8 +472,6 @@ static void	CheckConfigRequired(std::set<char> &checkDoube)
 		throw (std::invalid_argument("Error: Missing `server_name' instructions."));
 	if (checkDoube.count('R') < 1)
 		throw (std::invalid_argument("Error: Missing `root' instructions."));
-	// if (checkDoube.count('I') < 1)
-	// 	throw (std::invalid_argument("Error: Missing `index' instructions."));
 	if (checkDoube.count('C') < 1)
 		throw (std::invalid_argument("Error: Missing `client_max_body_size' instructions."));
 	return ;
@@ -520,8 +512,6 @@ static char	GetIdentifier(std::string &str)
 		return ('S');
 	if (!token.compare("root"))
 		return ('R');
-	// if (!token.compare("index"))
-	// 	return ('I');
 	if (!token.compare("client_max_body_size"))
 		return ('C');
 	if (!token.compare("error_page"))

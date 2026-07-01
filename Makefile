@@ -3,8 +3,8 @@
 #################################################################################################################
 NAME = webserv
 
-CC = g++
-FLAGS = -Wall -Wextra -Werror -std=c++98 -g
+CC = c++
+FLAGS = -Wall -Wextra -Werror -std=c++98
 
 INCLUDES = header
 OBJ_DIR = objets
