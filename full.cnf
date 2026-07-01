@@ -75,7 +75,6 @@ server {
 		methods GET POST DELETE;
         #index index.html;
         redirect 301 /new;
-        #redirect 301 /new;
         root ./var/www;
         cgi .php /usr/bin/php-cgi;
         #cgi .php /opt/homebrew/bin/php-cgi;

@@ -6,7 +6,7 @@
 /*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 14:38:06 by strieste          #+#    #+#             */
-/*   Updated: 2026/06/30 15:03:44 by strieste         ###   ########.fr       */
+/*   Updated: 2026/07/01 10:10:37 by strieste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -282,10 +282,10 @@ void	Server::SendCgiResponse(int i)
 				AddCookieSession(response, _client[indexClient]);
 			_client[indexClient].AppendWriteBuffer(response);
 			close(_fds[i].fd);
+			_fds[i].fd = -1;
 			int status;
 			waitpid(_client[indexClient].GetPidCgi(), &status, WNOHANG);
 			if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
-				_fds.erase(_fds.begin() + i);
 				_client[indexClient].SetIsCgi(false);
 				_client[indexClient].CleanCgiResponse();
 				_client[indexClient].ResetRequest();
@@ -305,7 +305,8 @@ void	Server::SendCgiResponse(int i)
 		int error = std::strtol(stringError.c_str(), NULL, 10);
 		ConfigServer &config = _configServer[_client[indexClient].GetIndexConfigServer()];
 		std::string response = SendErrorPage(config, error);
-		close(_fds[i].fd);
+		if (_fds[i].fd != -1)
+			close(_fds[i].fd);
 		_fds.erase(_fds.begin() + i);
 		_client[indexClient].AppendWriteBuffer(response);
 		_client[indexClient].ResetRequest();
