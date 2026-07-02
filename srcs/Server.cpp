@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
+/*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/13 14:38:06 by strieste          #+#    #+#             */
-/*   Updated: 2026/07/01 10:10:37 by strieste         ###   ########.fr       */
+/*   Updated: 2026/07/02 06:52:40 by seully           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -239,6 +239,7 @@ void	Server::AcceptClient(int fd, int idClient)
 	newClient.SetIndexConfigServer(fdServer);
 	newClient.SetTime(std::time(NULL));
 	_client.push_back(newClient);
+	std::cout << GREEN << "Log: Client connection." << RESET << std::endl;
 	return ;
 }
 
@@ -284,7 +285,7 @@ void	Server::SendCgiResponse(int i)
 			close(_fds[i].fd);
 			_fds[i].fd = -1;
 			int status;
-			waitpid(_client[indexClient].GetPidCgi(), &status, WNOHANG);
+			waitpid(_client[indexClient].GetPidCgi(), &status, 0);
 			if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
 				_client[indexClient].SetIsCgi(false);
 				_client[indexClient].CleanCgiResponse();
@@ -308,6 +309,7 @@ void	Server::SendCgiResponse(int i)
 		if (_fds[i].fd != -1)
 			close(_fds[i].fd);
 		_fds.erase(_fds.begin() + i);
+		_client[indexClient].ClearWriteBuffer();
 		_client[indexClient].AppendWriteBuffer(response);
 		_client[indexClient].ResetRequest();
 		_client[indexClient].CleanCgiResponse();
@@ -482,13 +484,13 @@ void	Server::CheckTimeoutClient( void )
 {
 	for (size_t k = 0; k < _client.size(); k++) {
 		if (_client[k].GetFd() == -1) {
-			if (std::time(NULL) - _client[k].GetTime() > 3000) {
+			if (std::time(NULL) - _client[k].GetTime() > 6000) {
 				_client.erase(_client.begin() + k);
 				k--;
 				continue ;
 			}
 		}
-		if (std::time(NULL) - _client[k].GetTime() > 30) {
+		if (std::time(NULL) - _client[k].GetTime() > 60) {
 			int fdClose = _client[k].GetFd();
 			if (fdClose == -1)
 				continue ;
@@ -502,9 +504,10 @@ void	Server::CheckTimeoutClient( void )
 			}
 			close(fdClose);
 			_client[k].SetFd(-1);
+			std::cout << "Log: Fd Clientid: "<< _client[k].GetIdClient() <<" close ‘timeout 60s'." << std::endl;
 			continue ;
 		}
-		if (_client[k].GetIsCgi() && std::time(NULL) - _client[k].GetTimeCgi() > 10) {
+		if (_client[k].GetIsCgi() && std::time(NULL) - _client[k].GetTimeCgi() > 15) {
 			int pipeFd = _client[k].GetPipeFd();
 			kill(_client[k].GetPidCgi(), SIGKILL);
 			waitpid(_client[k].GetPidCgi(), NULL, 0);

@@ -25,4 +25,4 @@ print("\r")
 print("<html><body>CGI loop</body></html>\r")
 
 while True:
-    time.sleep(1)
+    time.sleep1)
