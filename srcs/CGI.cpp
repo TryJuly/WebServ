@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CGI.cpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: strieste <strieste@student.42.ch>          +#+  +:+       +#+        */
+/*   By: seully <seully@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/02 15:35:11 by seully            #+#    #+#             */
-/*   Updated: 2026/06/30 12:07:51 by strieste         ###   ########.fr       */
+/*   Updated: 2026/07/02 06:45:12 by seully           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -207,6 +207,7 @@ void	CGI::LaunchCGI(ConfigLocation const &config, ConfigServer &configServer)
 		close(pipeIn[0]);
 		close(pipeIn[1]);
 		dup2(pipeOut[1], STDOUT_FILENO);
+		dup2(pipeOut[1], STDERR_FILENO);
 		close(pipeOut[0]);
 		close(pipeOut[1]);
 		execve(argv[0], argv, _envp);
